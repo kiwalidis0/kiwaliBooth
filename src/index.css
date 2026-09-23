@@ -2,7 +2,19 @@
 @tailwind components;
 @tailwind utilities;
 
+:root {
+  /* Kiwalibooth Design Tokens */
+  --theme-primary: #FF6B81;
+  --theme-primary-hover: #FF526C;
+  --theme-primary-soft: #FFE4E8;
+  --theme-primary-border: rgba(255, 107, 129, 0.4);
+}
+
 @layer base {
+  html {
+    scrollbar-gutter: stable;
+  }
+
   body {
     margin: 0;
     min-height: 100vh;
@@ -10,24 +22,41 @@
     color: #1C1917;
     overflow-x: hidden;
     font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+    transition: background-color 0.2s ease, color 0.2s ease;
+  }
+
+  html.dark body,
+  body.dark {
+    background-color: #0F0F12 !important;
+    color: #F4F4F5 !important;
+  }
+
+  html:not(.dark) body {
+    background-color: #FFFFFF !important;
+    color: #1C1917 !important;
   }
 }
 
 /* Crisp Clean Button & Card Styling */
 .soft-card {
-  @apply bg-white rounded-2xl border border-stone-200 transition-all duration-200;
+  @apply bg-white dark:bg-stone-900 rounded-2xl border border-stone-200 dark:border-stone-800 transition-all duration-200;
 }
 
 .soft-btn-primary {
-  @apply inline-flex items-center justify-center font-medium px-6 py-2.5 rounded-xl bg-stone-900 text-white hover:bg-stone-800 active:scale-[0.98] transition-all duration-150 cursor-pointer select-none;
+  @apply inline-flex items-center justify-center font-medium px-6 py-2.5 rounded-xl bg-stone-900 text-white hover:bg-stone-800 dark:bg-stone-100 dark:text-stone-900 dark:hover:bg-white active:scale-[0.98] transition-all duration-150 cursor-pointer select-none;
 }
 
 .soft-btn-coral {
-  @apply inline-flex items-center justify-center font-semibold px-6 py-2.5 rounded-xl bg-kiwali-coral text-white hover:bg-[#ff556e] active:scale-[0.98] transition-all duration-150 cursor-pointer select-none border border-transparent;
+  background-color: var(--theme-primary, #FF6B81);
+  @apply inline-flex items-center justify-center font-semibold px-6 py-2.5 rounded-xl text-white active:scale-[0.98] transition-all duration-150 cursor-pointer select-none border border-transparent shadow-sm;
+}
+
+.soft-btn-coral:hover {
+  background-color: var(--theme-primary-hover, #FF526C);
 }
 
 .soft-btn-secondary {
-  @apply inline-flex items-center justify-center font-medium px-5 py-2 rounded-xl bg-white text-stone-800 border border-stone-300 hover:bg-stone-50 hover:border-stone-400 active:scale-[0.98] transition-all duration-150 cursor-pointer select-none;
+  @apply inline-flex items-center justify-center font-medium px-5 py-2 rounded-xl bg-white dark:bg-stone-900 text-stone-800 dark:text-stone-200 border border-stone-300 dark:border-stone-700 hover:bg-stone-50 dark:hover:bg-stone-800 hover:border-stone-400 active:scale-[0.98] transition-all duration-150 cursor-pointer select-none;
 }
 
 /* Custom scrollbars */
@@ -41,6 +70,9 @@
 ::-webkit-scrollbar-thumb {
   background: #E7E5E4;
   border-radius: 9999px;
+}
+html.dark ::-webkit-scrollbar-thumb {
+  background: #27272A;
 }
 ::-webkit-scrollbar-thumb:hover {
   background: #D6D3D1;

@@ -6,6 +6,8 @@ import type {
   DateStampConfig,
   StickerItem,
   FilterType,
+  ColorTheme,
+  AppFontSize,
 } from '../types/photobooth';
 
 export interface BoothContextType {
@@ -32,7 +34,15 @@ export interface BoothContextType {
   finalImage: string | null;
   setFinalImage: (url: string | null) => void;
   isMuted: boolean;
+  setIsMuted: (muted: boolean) => void;
   toggleMute: () => void;
+  colorTheme: ColorTheme;
+  setColorTheme: (theme: ColorTheme) => void;
+  isDarkMode: boolean;
+  setIsDarkMode: (dark: boolean) => void;
+  toggleDarkMode: () => void;
+  fontSize: AppFontSize;
+  setFontSize: (size: AppFontSize) => void;
   resetBooth: () => void;
 }
 

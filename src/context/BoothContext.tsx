@@ -6,11 +6,52 @@ import type {
   DateStampConfig,
   StickerItem,
   FilterType,
+  ColorTheme,
+  AppFontSize,
 } from '../types/photobooth';
 import { LAYOUTS } from '../data/layouts';
 import { TEMPLATES } from '../data/templates';
 import { setSoundMuted } from '../utils/audio';
 import { BoothContext } from './boothContextValue';
+
+const THEME_PALETTES: Record<ColorTheme, { primary: string; hover: string; soft: string; border: string }> = {
+  pink: {
+    primary: '#FF6B81',
+    hover: '#FF526C',
+    soft: '#FFE4E8',
+    border: 'rgba(255, 107, 129, 0.4)',
+  },
+  blue: {
+    primary: '#3B82F6',
+    hover: '#2563EB',
+    soft: '#DBEAFE',
+    border: 'rgba(59, 130, 246, 0.4)',
+  },
+  'pastel-red': {
+    primary: '#F87171',
+    hover: '#EF4444',
+    soft: '#FEE2E2',
+    border: 'rgba(248, 113, 113, 0.4)',
+  },
+  green: {
+    primary: '#10B981',
+    hover: '#059669',
+    soft: '#D1FAE5',
+    border: 'rgba(16, 185, 129, 0.4)',
+  },
+  purple: {
+    primary: '#A855F7',
+    hover: '#9333EA',
+    soft: '#F3E8FF',
+    border: 'rgba(168, 85, 247, 0.4)',
+  },
+  amber: {
+    primary: '#F59E0B',
+    hover: '#D97706',
+    soft: '#FEF3C7',
+    border: 'rgba(245, 158, 11, 0.4)',
+  },
+};
 
 function getFormattedDate(format: 'YYYY.MM.DD' | 'DD.MM.YYYY' = 'YYYY.MM.DD'): string {
   const d = new Date();
@@ -28,7 +69,47 @@ export const BoothProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   const [photos, setPhotos] = useState<CapturedPhoto[]>([]);
   const [retakeIndex, setRetakeIndex] = useState<number | null>(null);
   const [finalImage, setFinalImage] = useState<string | null>(null);
-  const [isMuted, setIsMuted] = useState<boolean>(false);
+
+  // Global Preferences with safe localStorage hydration
+  const [colorTheme, setColorTheme] = useState<ColorTheme>(() => {
+    try {
+      const saved = localStorage.getItem('kb_theme');
+      if (saved && saved in THEME_PALETTES) return saved as ColorTheme;
+    } catch {
+      // ignore storage errors
+    }
+    return 'pink';
+  });
+
+  const [isDarkMode, setIsDarkMode] = useState<boolean>(() => {
+    try {
+      const saved = localStorage.getItem('kb_dark');
+      if (saved !== null) return saved === 'true';
+    } catch {
+      // ignore storage errors
+    }
+    return false; // Default: Light mode
+  });
+
+  const [fontSize, setFontSize] = useState<AppFontSize>(() => {
+    try {
+      const saved = localStorage.getItem('kb_fontsize');
+      if (saved === 'compact' || saved === 'normal' || saved === 'large') return saved;
+    } catch {
+      // ignore storage errors
+    }
+    return 'normal';
+  });
+
+  const [isMuted, setIsMuted] = useState<boolean>(() => {
+    try {
+      const saved = localStorage.getItem('kb_muted');
+      if (saved !== null) return saved === 'true';
+    } catch {
+      // ignore storage errors
+    }
+    return false; // Default: Sound on
+  });
 
   const [dateStamp, setDateStamp] = useState<DateStampConfig>({
     enabled: true,
@@ -36,14 +117,71 @@ export const BoothProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     color: '#111116',
     format: 'YYYY.MM.DD',
     customText: getFormattedDate('YYYY.MM.DD'),
+    fontSize: 20,
   });
 
   const [stickers, setStickers] = useState<StickerItem[]>([]);
 
-  // Keep audio module in sync
+  // Keep audio module in sync & persist
   useEffect(() => {
     setSoundMuted(isMuted);
+    try {
+      localStorage.setItem('kb_muted', String(isMuted));
+    } catch {
+      // ignore storage errors
+    }
   }, [isMuted]);
+
+  // Sync colorTheme with CSS variables & persist
+  useEffect(() => {
+    const root = document.documentElement;
+    const palette = THEME_PALETTES[colorTheme] || THEME_PALETTES.pink;
+    root.style.setProperty('--theme-primary', palette.primary);
+    root.style.setProperty('--theme-primary-hover', palette.hover);
+    root.style.setProperty('--theme-primary-soft', palette.soft);
+    root.style.setProperty('--theme-primary-border', palette.border);
+    try {
+      localStorage.setItem('kb_theme', colorTheme);
+    } catch {
+      // ignore storage errors
+    }
+  }, [colorTheme]);
+
+  // Sync Dark Mode class, colorScheme & persist
+  useEffect(() => {
+    const root = document.documentElement;
+    if (isDarkMode) {
+      root.classList.add('dark');
+      document.body.classList.add('dark');
+      root.style.colorScheme = 'dark';
+    } else {
+      root.classList.remove('dark');
+      document.body.classList.remove('dark');
+      root.style.colorScheme = 'light';
+    }
+    try {
+      localStorage.setItem('kb_dark', String(isDarkMode));
+    } catch {
+      // ignore storage errors
+    }
+  }, [isDarkMode]);
+
+  // Sync Font Size & persist
+  useEffect(() => {
+    const root = document.documentElement;
+    if (fontSize === 'compact') {
+      root.style.fontSize = '15px';
+    } else if (fontSize === 'large') {
+      root.style.fontSize = '17px';
+    } else {
+      root.style.fontSize = '16px';
+    }
+    try {
+      localStorage.setItem('kb_fontsize', fontSize);
+    } catch {
+      // ignore storage errors
+    }
+  }, [fontSize]);
 
   const setSelectedTemplateId = (id: string) => {
     setSelectedTemplateIdState(id);
@@ -58,6 +196,10 @@ export const BoothProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 
   const toggleMute = () => {
     setIsMuted(prev => !prev);
+  };
+
+  const toggleDarkMode = () => {
+    setIsDarkMode(prev => !prev);
   };
 
   const updatePhoto = (slotIndex: number, updates: Partial<CapturedPhoto>) => {
@@ -78,7 +220,7 @@ export const BoothProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       x: x !== undefined ? x : layout.width / 2 + (Math.random() * 80 - 40),
       y: y !== undefined ? y : layout.height / 2 + (Math.random() * 80 - 40),
       scale: 1,
-      rotation: Math.floor(Math.random() * 30 - 15),
+      rotation: 0,
     };
     setStickers(prev => [...prev, newSticker]);
   };
@@ -98,7 +240,6 @@ export const BoothProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     setStickers([]);
     setRetakeIndex(null);
     setFinalImage(null);
-    setStep('landing');
   };
 
   return (
@@ -127,7 +268,15 @@ export const BoothProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         finalImage,
         setFinalImage,
         isMuted,
+        setIsMuted,
         toggleMute,
+        colorTheme,
+        setColorTheme,
+        isDarkMode,
+        setIsDarkMode,
+        toggleDarkMode,
+        fontSize,
+        setFontSize,
         resetBooth,
       }}
     >

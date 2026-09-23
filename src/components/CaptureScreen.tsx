@@ -15,6 +15,7 @@ import { useBooth } from '../context/useBooth';
 import { LAYOUTS } from '../data/layouts';
 import { playCountdownBeep, playShutterSound } from '../utils/audio';
 import { MOCK_SELFIE_LIST } from '../utils/mockPhotos';
+import { ConfirmModal } from './ConfirmModal';
 import type { CapturedPhoto } from '../types/photobooth';
 
 gsap.registerPlugin(useGSAP);
@@ -49,6 +50,7 @@ export const CaptureScreen: React.FC = () => {
   const [countdown, setCountdown] = useState<number | null>(null);
   const [showFlash, setShowFlash] = useState<boolean>(false);
   const [uploadFeedback, setUploadFeedback] = useState<string | null>(null);
+  const [showBackConfirm, setShowBackConfirm] = useState<boolean>(false);
 
   const [retryTrigger, setRetryTrigger] = useState<number>(0);
 
@@ -292,14 +294,12 @@ export const CaptureScreen: React.FC = () => {
       const dataUrls = await Promise.all(fileList.map(readAsDataUrl));
 
       if (retakeIndex !== null) {
-        // Single slot retake
         recordSlotPhoto(dataUrls[0], retakeIndex);
         setRetakeIndex(null);
         setTimeout(() => setStep('review'), 400);
         return;
       }
 
-      // If user provided multiple files or just one file:
       const updatedPhotos = [...photos];
 
       dataUrls.forEach((dataUrl, idx) => {
@@ -328,7 +328,6 @@ export const CaptureScreen: React.FC = () => {
       updatedPhotos.sort((a, b) => a.slotIndex - b.slotIndex);
       setPhotos(updatedPhotos);
 
-      // Check if all slots are filled
       if (updatedPhotos.length >= layout.shotsCount) {
         setUploadFeedback('All slots filled! Proceeding to review...');
         setTimeout(() => setStep('review'), 500);
@@ -349,94 +348,231 @@ export const CaptureScreen: React.FC = () => {
     }
   };
 
+  const handleBack = () => {
+    if (retakeIndex !== null) {
+      setRetakeIndex(null);
+      setStep('review');
+    } else if (photos.length > 0) {
+      setShowBackConfirm(true);
+    } else {
+      setStep('layout');
+    }
+  };
+
+  const handleConfirmBack = () => {
+    setShowBackConfirm(false);
+    setPhotos([]);
+    setStep('layout');
+  };
+
   return (
-    <div ref={containerRef} className="py-6 px-4 max-w-3xl mx-auto flex flex-col items-center">
-      {/* Screen Flash Overlay */}
-      {showFlash && (
-        <div className="fixed inset-0 z-50 bg-white pointer-events-none camera-flash" />
-      )}
+    <>
+      <div ref={containerRef} className="py-6 px-4 max-w-3xl mx-auto flex flex-col items-center">
+        {/* Screen Flash Overlay */}
+        {showFlash && (
+          <div className="fixed inset-0 z-50 bg-white pointer-events-none camera-flash" />
+        )}
 
-      {/* Header bar */}
-      <div className="w-full flex items-center justify-between gap-4 mb-3">
-        <button
-          onClick={() => {
-            if (retakeIndex !== null) {
-              setRetakeIndex(null);
-              setStep('review');
-            } else {
-              setStep('layout');
-            }
-          }}
-          className="inline-flex items-center gap-1 text-xs text-stone-500 hover:text-stone-900 cursor-pointer transition-colors"
-        >
-          <ArrowLeft className="w-3.5 h-3.5" />
-          <span>{retakeIndex !== null ? 'Cancel Retake' : 'Back'}</span>
-        </button>
+        {/* Header bar */}
+        <div className="w-full flex items-center justify-between gap-4 mb-3">
+          <button
+            onClick={handleBack}
+            className="inline-flex items-center gap-1 text-xs text-stone-500 dark:text-stone-400 hover:text-stone-900 dark:hover:text-white cursor-pointer transition-colors"
+          >
+            <ArrowLeft className="w-3.5 h-3.5" />
+            <span>{retakeIndex !== null ? 'Cancel Retake' : 'Back'}</span>
+          </button>
 
-        {/* Slot Progress Indicator */}
-        <div className="flex items-center gap-2 bg-white px-3 py-1.5 rounded-xl border border-stone-200 text-xs font-medium text-stone-700">
-          <span>
-            {retakeIndex !== null
-              ? `Retaking Shot #${retakeIndex + 1}`
-              : `Targeting Shot #${currentSlotTarget + 1} of ${layout.shotsCount}`}
-          </span>
-          <div className="flex gap-1 ml-1">
-            {layout.slots.map((s) => {
-              const isFilled = photos.some(p => p.slotIndex === s.id);
-              const isCurrent = currentSlotTarget === s.id;
-              return (
-                <button
-                  key={s.id}
-                  onClick={() => setCurrentSlotTarget(s.id)}
-                  title={`Select slot #${s.id + 1}`}
-                  className={`w-5 h-5 rounded-md text-[10px] font-mono flex items-center justify-center transition-all cursor-pointer ${
-                    isCurrent
-                      ? 'bg-kiwali-coral text-white font-bold ring-2 ring-kiwali-coral/30'
-                      : isFilled
-                      ? 'bg-emerald-100 text-emerald-800 border border-emerald-200'
-                      : 'bg-stone-100 text-stone-500 border border-stone-200 hover:bg-stone-200'
-                  }`}
-                >
-                  {isFilled && !isCurrent ? <Check className="w-2.5 h-2.5" /> : s.id + 1}
-                </button>
-              );
-            })}
+          {/* Slot Progress Indicator */}
+          <div className="flex items-center gap-2 bg-white dark:bg-stone-900 px-3 py-1.5 rounded-xl border border-stone-200 dark:border-stone-800 text-xs font-medium text-stone-700 dark:text-stone-300">
+            <span>
+              {retakeIndex !== null
+                ? `Retaking Shot #${retakeIndex + 1}`
+                : `Targeting Shot #${currentSlotTarget + 1} of ${layout.shotsCount}`}
+            </span>
+            <div className="flex gap-1 ml-1">
+              {layout.slots.map((s) => {
+                const isFilled = photos.some(p => p.slotIndex === s.id);
+                const isCurrent = currentSlotTarget === s.id;
+                return (
+                  <button
+                    key={s.id}
+                    onClick={() => setCurrentSlotTarget(s.id)}
+                    title={`Select slot #${s.id + 1}`}
+                    className={`w-5 h-5 rounded-md text-[10px] font-mono flex items-center justify-center transition-all cursor-pointer ${
+                      isCurrent
+                        ? 'soft-btn-coral !p-0 !text-white font-bold ring-2 ring-kiwali-coral/30'
+                        : isFilled
+                        ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800'
+                        : 'bg-stone-100 dark:bg-stone-800 text-stone-500 dark:text-stone-400 border border-stone-200 dark:border-stone-700 hover:bg-stone-200'
+                    }`}
+                  >
+                    {isFilled && !isCurrent ? <Check className="w-2.5 h-2.5" /> : s.id + 1}
+                  </button>
+                );
+              })}
+            </div>
           </div>
         </div>
-      </div>
 
-      {uploadFeedback && (
-        <div className="w-full mb-3 p-2 text-center text-xs bg-emerald-50 border border-emerald-200 text-emerald-800 rounded-xl">
-          {uploadFeedback}
+        {uploadFeedback && (
+          <div className="w-full mb-3 p-2 text-center text-xs bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 text-emerald-800 dark:text-emerald-300 rounded-xl">
+            {uploadFeedback}
+          </div>
+        )}
+
+        {/* Camera Viewfinder */}
+        <div className="relative w-full aspect-[4/3] max-h-[480px] bg-stone-900 rounded-2xl overflow-hidden border border-stone-200 dark:border-stone-800 flex items-center justify-center">
+          <video
+            ref={videoRef}
+            autoPlay
+            playsInline
+            muted
+            className={`w-full h-full object-cover transition-transform ${
+              isMirrored ? 'scale-x-[-1]' : ''
+            } ${hasCameraAccess === false ? 'hidden' : 'block'}`}
+          />
+
+          {/* Camera Error / Fallback Banner */}
+          {hasCameraAccess === false && (
+            <div className="p-6 text-center max-w-sm bg-white dark:bg-stone-900 rounded-2xl border border-stone-200 dark:border-stone-800 mx-4">
+              <AlertCircle className="w-8 h-8 text-kiwali-coral mx-auto mb-2" />
+              <h3 className="font-fredoka font-semibold text-base text-stone-900 dark:text-white mb-1">
+                Camera Not Available
+              </h3>
+              <p className="text-xs text-stone-500 dark:text-stone-400 mb-4">{errorMessage}</p>
+
+              <div className="flex flex-col gap-2">
+                <label className="soft-btn-coral text-xs py-2.5 px-4 cursor-pointer flex items-center justify-center gap-1.5">
+                  <Upload className="w-3.5 h-3.5" />
+                  <span>Upload Photos from Device</span>
+                  <input
+                    type="file"
+                    multiple
+                    accept="image/*"
+                    onChange={handleFileUpload}
+                    className="hidden"
+                  />
+                </label>
+
+                <button
+                  onClick={handleUseMockPhotos}
+                  className="soft-btn-secondary text-xs py-2 px-4 cursor-pointer flex items-center justify-center gap-1.5"
+                >
+                  <Sparkles className="w-3.5 h-3.5" />
+                  <span>Use Sample Photos</span>
+                </button>
+
+                <button
+                  onClick={() => setRetryTrigger(prev => prev + 1)}
+                  className="text-[11px] text-stone-400 hover:text-stone-700 dark:hover:text-stone-200 underline mt-1 cursor-pointer"
+                >
+                  Retry Camera
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* Viewfinder overlay */}
+          <div className="absolute inset-4 pointer-events-none border border-white/20 rounded-xl flex flex-col justify-between p-3">
+            <div className="flex justify-between items-center text-white/80 text-[11px]">
+              <div className="flex items-center gap-1.5 bg-black/40 px-2.5 py-0.5 rounded-md">
+                <div className="w-1.5 h-1.5 rounded-full bg-red-400 animate-pulse" />
+                <span>LIVE</span>
+              </div>
+              <span className="text-[10px] text-white/70 font-mono">
+                {layout.name}
+              </span>
+            </div>
+            <div />
+          </div>
+
+          {/* Center Countdown Pulse */}
+          {countdown !== null && (
+            <div
+              ref={countdownNumberRef}
+              className="absolute inset-0 flex items-center justify-center bg-black/30 z-30 pointer-events-none"
+            >
+              <div className="w-24 h-24 rounded-2xl bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-800 flex items-center justify-center shadow-lg">
+                {countdown > 0 ? (
+                  <span className="font-fredoka font-bold text-5xl text-stone-900 dark:text-white">
+                    {countdown}
+                  </span>
+                ) : (
+                  <div className="text-center font-fredoka font-semibold text-lg text-kiwali-coral leading-tight">
+                    Smile!
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
         </div>
-      )}
 
-      {/* Camera Viewfinder */}
-      <div className="relative w-full aspect-[4/3] max-h-[480px] bg-stone-900 rounded-2xl overflow-hidden border border-stone-200 flex items-center justify-center">
-        <video
-          ref={videoRef}
-          autoPlay
-          playsInline
-          muted
-          className={`w-full h-full object-cover transition-transform ${
-            isMirrored ? 'scale-x-[-1]' : ''
-          } ${hasCameraAccess === false ? 'hidden' : 'block'}`}
-        />
+        {/* Control Area: Row 1 (Primary) & Row 2 (Secondary) */}
+        <div className="w-full mt-4 bg-white dark:bg-stone-900 p-4 rounded-2xl border border-stone-200 dark:border-stone-800 space-y-3">
+          {/* ROW 1: PRIMARY ACTION BUTTONS */}
+          <div className="flex items-center justify-center gap-3 w-full">
+            <button
+              onClick={startCountdownSequence}
+              disabled={isCapturing}
+              className={`flex-1 max-w-xs soft-btn-coral text-sm py-3 flex items-center justify-center gap-2 ${
+                isCapturing ? 'opacity-50 cursor-not-allowed' : ''
+              }`}
+            >
+              <Play className="w-4 h-4 fill-white" />
+              <span>{isCapturing ? 'Capturing sequence...' : 'Auto Countdown (3s)'}</span>
+            </button>
 
-        {/* Camera Error / Fallback Banner */}
-        {hasCameraAccess === false && (
-          <div className="p-6 text-center max-w-sm bg-white rounded-2xl border border-stone-200 mx-4">
-            <AlertCircle className="w-8 h-8 text-kiwali-coral mx-auto mb-2" />
-            <h3 className="font-fredoka font-semibold text-base text-stone-900 mb-1">
-              Camera Not Available
-            </h3>
-            <p className="text-xs text-stone-500 mb-4">{errorMessage}</p>
+            <button
+              onClick={handleManualSnap}
+              disabled={isCapturing}
+              className="soft-btn-secondary text-sm py-3 px-6 flex items-center gap-2"
+              title="Snap immediately"
+            >
+              <Camera className="w-4 h-4" />
+              <span>Snap Now</span>
+            </button>
+          </div>
 
-            <div className="flex flex-col gap-2">
-              <label className="soft-btn-coral text-xs py-2.5 px-4 cursor-pointer flex items-center justify-center gap-1.5">
-                <Upload className="w-3.5 h-3.5" />
-                <span>Upload Photos from Device</span>
+          {/* ROW 2: SECONDARY CONTROLS & FALLBACKS */}
+          <div className="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-stone-100 dark:border-stone-800 text-xs">
+            {/* Left: Camera Options */}
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => setIsMirrored(prev => !prev)}
+                title="Toggle Mirror View"
+                className={`px-3 py-1.5 rounded-lg border text-xs font-medium flex items-center gap-1.5 transition-all cursor-pointer ${
+                  isMirrored
+                    ? 'border-kiwali-coral bg-kiwali-soft-pink/40 text-kiwali-coral dark:bg-stone-800'
+                    : 'border-stone-200 dark:border-stone-700 text-stone-600 dark:text-stone-300 hover:bg-stone-50 dark:hover:bg-stone-800'
+                }`}
+              >
+                <FlipHorizontal className="w-3.5 h-3.5" />
+                <span>Mirror</span>
+              </button>
+
+              {devices.length > 1 && (
+                <select
+                  value={selectedDeviceId}
+                  onChange={(e) => setSelectedDeviceId(e.target.value)}
+                  className="px-2.5 py-1.5 rounded-lg border border-stone-200 dark:border-stone-700 text-xs bg-white dark:bg-stone-900 text-stone-700 dark:text-stone-300 cursor-pointer"
+                >
+                  {devices.map((d, i) => (
+                    <option key={d.deviceId} value={d.deviceId}>
+                      {d.label || `Camera ${i + 1}`}
+                    </option>
+                  ))}
+                </select>
+              )}
+            </div>
+
+            {/* Right: Upload & Samples */}
+            <div className="flex items-center gap-2">
+              <label className="px-3 py-1.5 rounded-lg border border-stone-200 dark:border-stone-700 hover:bg-stone-50 dark:hover:bg-stone-800 text-stone-700 dark:text-stone-300 text-xs font-medium flex items-center gap-1.5 cursor-pointer transition-colors">
+                <Upload className="w-3.5 h-3.5 text-stone-500" />
+                <span>Upload Photo(s)</span>
                 <input
+                  ref={fileInputRef}
                   type="file"
                   multiple
                   accept="image/*"
@@ -447,139 +583,25 @@ export const CaptureScreen: React.FC = () => {
 
               <button
                 onClick={handleUseMockPhotos}
-                className="soft-btn-secondary text-xs py-2 px-4 cursor-pointer flex items-center justify-center gap-1.5"
+                className="text-stone-500 hover:text-stone-800 dark:text-stone-400 dark:hover:text-stone-200 px-2.5 py-1.5 text-xs transition-colors cursor-pointer"
               >
-                <Sparkles className="w-3.5 h-3.5" />
-                <span>Use Sample Photos</span>
-              </button>
-
-              <button
-                onClick={() => setRetryTrigger(prev => prev + 1)}
-                className="text-[11px] text-stone-400 hover:text-stone-700 underline mt-1 cursor-pointer"
-              >
-                Retry Camera
+                Use Samples
               </button>
             </div>
           </div>
-        )}
-
-        {/* Viewfinder overlay */}
-        <div className="absolute inset-4 pointer-events-none border border-white/20 rounded-xl flex flex-col justify-between p-3">
-          <div className="flex justify-between items-center text-white/80 text-[11px]">
-            <div className="flex items-center gap-1.5 bg-black/40 px-2.5 py-0.5 rounded-md">
-              <div className="w-1.5 h-1.5 rounded-full bg-red-400 animate-pulse" />
-              <span>LIVE</span>
-            </div>
-            <span className="text-[10px] text-white/70 font-mono">
-              {layout.name}
-            </span>
-          </div>
-          <div />
-        </div>
-
-        {/* Center Countdown Pulse */}
-        {countdown !== null && (
-          <div
-            ref={countdownNumberRef}
-            className="absolute inset-0 flex items-center justify-center bg-black/30 z-30 pointer-events-none"
-          >
-            <div className="w-24 h-24 rounded-2xl bg-white border border-stone-200 flex items-center justify-center">
-              {countdown > 0 ? (
-                <span className="font-fredoka font-bold text-5xl text-stone-900">
-                  {countdown}
-                </span>
-              ) : (
-                <div className="text-center font-fredoka font-semibold text-lg text-kiwali-coral leading-tight">
-                  Smile!
-                </div>
-              )}
-            </div>
-          </div>
-        )}
-      </div>
-
-      {/* Control Area: Row 1 (Primary) & Row 2 (Secondary) */}
-      <div className="w-full mt-4 bg-white p-4 rounded-2xl border border-stone-200 space-y-3">
-        {/* ROW 1: PRIMARY ACTION BUTTONS */}
-        <div className="flex items-center justify-center gap-3 w-full">
-          <button
-            onClick={startCountdownSequence}
-            disabled={isCapturing}
-            className={`flex-1 max-w-xs soft-btn-coral text-sm py-3 flex items-center justify-center gap-2 ${
-              isCapturing ? 'opacity-50 cursor-not-allowed' : ''
-            }`}
-          >
-            <Play className="w-4 h-4 fill-white" />
-            <span>{isCapturing ? 'Capturing sequence...' : 'Auto Countdown (3s)'}</span>
-          </button>
-
-          <button
-            onClick={handleManualSnap}
-            disabled={isCapturing}
-            className="soft-btn-secondary text-sm py-3 px-6 flex items-center gap-2"
-            title="Snap immediately"
-          >
-            <Camera className="w-4 h-4" />
-            <span>Snap Now</span>
-          </button>
-        </div>
-
-        {/* ROW 2: SECONDARY CONTROLS & FALLBACKS */}
-        <div className="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-stone-100 text-xs">
-          {/* Left: Camera Options */}
-          <div className="flex items-center gap-2">
-            <button
-              onClick={() => setIsMirrored(prev => !prev)}
-              title="Toggle Mirror View"
-              className={`px-3 py-1.5 rounded-lg border text-xs font-medium flex items-center gap-1.5 transition-all cursor-pointer ${
-                isMirrored
-                  ? 'border-kiwali-coral bg-kiwali-soft-pink/40 text-kiwali-coral'
-                  : 'border-stone-200 text-stone-600 hover:bg-stone-50'
-              }`}
-            >
-              <FlipHorizontal className="w-3.5 h-3.5" />
-              <span>Mirror</span>
-            </button>
-
-            {devices.length > 1 && (
-              <select
-                value={selectedDeviceId}
-                onChange={(e) => setSelectedDeviceId(e.target.value)}
-                className="px-2.5 py-1.5 rounded-lg border border-stone-200 text-xs bg-white text-stone-700 cursor-pointer"
-              >
-                {devices.map((d, i) => (
-                  <option key={d.deviceId} value={d.deviceId}>
-                    {d.label || `Camera ${i + 1}`}
-                  </option>
-                ))}
-              </select>
-            )}
-          </div>
-
-          {/* Right: Upload & Samples */}
-          <div className="flex items-center gap-2">
-            <label className="px-3 py-1.5 rounded-lg border border-stone-200 hover:bg-stone-50 text-stone-700 text-xs font-medium flex items-center gap-1.5 cursor-pointer transition-colors">
-              <Upload className="w-3.5 h-3.5 text-stone-500" />
-              <span>Upload Photo(s)</span>
-              <input
-                ref={fileInputRef}
-                type="file"
-                multiple
-                accept="image/*"
-                onChange={handleFileUpload}
-                className="hidden"
-              />
-            </label>
-
-            <button
-              onClick={handleUseMockPhotos}
-              className="text-stone-500 hover:text-stone-800 px-2.5 py-1.5 text-xs transition-colors cursor-pointer"
-            >
-              Use Samples
-            </button>
-          </div>
         </div>
       </div>
-    </div>
+
+      {/* Confirmation Modal when navigating back with captured photos */}
+      <ConfirmModal
+        isOpen={showBackConfirm}
+        title="Leave and clear photos?"
+        message="Wait! Your pictures will not be saved. Download them first or they will be gone forever."
+        confirmLabel="Leave & Clear"
+        cancelLabel="Stay Here"
+        onConfirm={handleConfirmBack}
+        onCancel={() => setShowBackConfirm(false)}
+      />
+    </>
   );
 };

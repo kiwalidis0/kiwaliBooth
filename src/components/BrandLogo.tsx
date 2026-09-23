@@ -12,9 +12,9 @@ export const BrandLogo: React.FC<BrandLogoProps> = ({
   className = '',
 }) => {
   const iconDimensions = {
-    sm: 'w-6 h-6 text-[11px]',
-    md: 'w-8 h-8 text-xs',
-    lg: 'w-10 h-10 text-sm',
+    sm: 'w-6 h-6',
+    md: 'w-8 h-8',
+    lg: 'w-10 h-10',
   }[size];
 
   const textDimensions = {
@@ -25,16 +25,15 @@ export const BrandLogo: React.FC<BrandLogoProps> = ({
 
   return (
     <div className={`inline-flex items-center gap-2.5 select-none ${className}`}>
-      {/* Crisp "KB" Letter Mark */}
-      <div
-        className={`${iconDimensions} rounded-lg bg-stone-900 text-white font-mono font-bold flex items-center justify-center tracking-tight transition-transform`}
-        aria-label="Kiwalibooth KB Logo"
-      >
-        <span>KB</span>
-      </div>
+      {/* Official Kiwalibooth SVG Mark */}
+      <img
+        src="/kiwalibooth.svg"
+        alt="Kiwalibooth Logo"
+        className={`${iconDimensions} object-contain flex-shrink-0 transition-transform group-hover:scale-105`}
+      />
 
       {showText && (
-        <span className={`font-fredoka font-semibold tracking-tight text-stone-900 ${textDimensions}`}>
+        <span className={`font-fredoka font-semibold tracking-tight text-stone-900 dark:text-white ${textDimensions}`}>
           kiwalibooth
         </span>
       )}

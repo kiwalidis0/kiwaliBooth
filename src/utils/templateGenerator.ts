@@ -2,33 +2,33 @@ import type { LayoutConfig, TemplateConfig } from '../types/photobooth';
 
 /**
  * Creates a clean SVG overlay data URL for built-in template decorations.
- * Kept strictly minimal: crisp layout branding with no barcodes, archive marks, or header clutter.
+ * Kept strictly minimal: subtle kiwalibooth mark at the very bottom, leaving prominent space for the memory text & date.
  */
 export function generateTemplateOverlaySvg(layout: LayoutConfig, template: TemplateConfig): string {
   const { width, height } = layout;
 
   let brandColor = '#1C1917';
   if (template.theme === 'noir') {
-    brandColor = '#F8FAFC';
+    brandColor = '#94A3B8';
   } else if (template.theme === 'pastel') {
-    brandColor = '#7E22CE';
+    brandColor = '#A855F7';
   }
 
-  // Pure clean photostrip brand mark: just "kiwalibooth" at the bottom footer area
-  const footerY = height - 52;
+  // Subtle clean photostrip brand mark at the very bottom
+  const footerY = height - 20;
 
   const decorations = `
     <g id="decorations">
-      <!-- Clean, minimal kiwalibooth footer text only -->
       <text
         x="${width / 2}"
         y="${footerY}"
         text-anchor="middle"
         font-family="'Fredoka', sans-serif"
         font-weight="600"
-        font-size="22"
+        font-size="13"
         fill="${brandColor}"
-        letter-spacing="0.5"
+        opacity="0.85"
+        letter-spacing="1.5"
       >kiwalibooth</text>
     </g>
   `;

@@ -1,5 +1,9 @@
 export type BoothStep = 'landing' | 'layout' | 'capture' | 'review' | 'editor' | 'download';
 
+export type ColorTheme = 'pink' | 'blue' | 'pastel-red' | 'green' | 'purple' | 'amber';
+
+export type AppFontSize = 'compact' | 'normal' | 'large';
+
 export type LayoutId = 'single' | 'double' | 'triple' | 'classic4';
 
 export interface PhotoSlot {
@@ -66,6 +70,7 @@ export interface DateStampConfig {
   color: string;
   format: StampFormat;
   customText: string;
+  fontSize?: number;
 }
 
 export interface StickerItem {

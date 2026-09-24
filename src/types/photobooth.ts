@@ -61,7 +61,7 @@ export interface TemplateConfig {
   customOverlayUrl?: string; // transparent PNG uploaded from Canva
 }
 
-export type StampFont = 'Plus Jakarta Sans' | 'Fredoka' | 'Gaegu' | 'Space Mono';
+export type StampFont = 'Fredoka' | 'Open Sans';
 export type StampFormat = 'YYYY.MM.DD' | 'DD.MM.YYYY' | 'custom';
 
 export interface DateStampConfig {

@@ -111,29 +111,47 @@ export const DownloadScreen: React.FC = () => {
     <>
       <div ref={containerRef} className="py-8 px-4 max-w-lg mx-auto flex flex-col items-center">
         {/* Top status indicator */}
-        <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300 text-xs font-medium mb-3 border border-emerald-200 dark:border-emerald-800">
+        <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-theme-soft/50 text-theme-primary dark:bg-stone-800 text-xs font-semibold mb-3 border border-theme-primary/30">
           <Check className="w-3.5 h-3.5" />
           <span>Photostrip Ready</span>
         </div>
 
-        <h2 className="text-3xl font-fredoka font-semibold text-stone-900 dark:text-white text-center mb-1">
+        <h2 className="text-3xl font-fredoka font-semibold text-theme-primary text-center mb-1">
           Your photostrip is ready
         </h2>
-        <p className="text-xs text-stone-500 dark:text-stone-400 text-center mb-6">
+        <p className="text-xs text-black dark:text-stone-300 text-center mb-6 font-sans">
           Rendered directly in-browser memory with 0 server uploads.
         </p>
 
         {/* Photostrip Dispenser & Canvas Preview */}
         <div className="w-full flex flex-col items-center">
-          {/* Sleek dispenser slot */}
-          <div className="w-72 h-8 bg-stone-900 dark:bg-stone-800 rounded-t-xl relative z-20 flex items-center justify-between px-4">
-            <div className="flex items-center gap-1.5">
-              <div className={`w-1.5 h-1.5 rounded-full ${isSavingDone ? 'bg-emerald-400' : 'bg-amber-400 animate-pulse'}`} />
-              <span className="text-[10px] text-stone-400 font-mono tracking-wider">
-                {isSavingDone ? 'SAVED' : 'RENDERING...'}
-              </span>
+          {/* Themed Photobooth Dispenser / Printer Housing */}
+          <div className="w-72 sm:w-80 bg-white dark:bg-stone-900 border-2 border-b-0 border-theme-primary/30 rounded-t-2xl shadow-md relative z-20 px-4 pt-3 pb-2.5 flex flex-col items-center gap-2">
+            {/* Top Bar with Status, Centered Brand, and Themed Accents */}
+            <div className="w-full flex items-center justify-between">
+              {/* Left: Printer Status Indicator */}
+              <div className="flex items-center gap-1.5 flex-1">
+                <span className={`w-2 h-2 rounded-full ${isSavingDone ? 'bg-theme-primary' : 'bg-amber-400 animate-pulse'}`} />
+                <span className="text-[10px] font-sans font-medium text-black dark:text-stone-300 tracking-wider">
+                  {isSavingDone ? 'READY' : 'PRINTING...'}
+                </span>
+              </div>
+
+              {/* Center: Explicitly "Kiwalibooth" in theme color */}
+              <div className="font-fredoka font-semibold text-sm sm:text-base text-theme-primary tracking-wide text-center flex-shrink-0">
+                Kiwalibooth
+              </div>
+
+              {/* Right: Themed Accent Dots */}
+              <div className="flex items-center justify-end gap-1 flex-1">
+                <span className="w-1.5 h-1.5 rounded-full bg-theme-primary/30" />
+                <span className="w-1.5 h-1.5 rounded-full bg-theme-primary/30" />
+                <span className="w-1.5 h-1.5 rounded-full bg-theme-primary/30" />
+              </div>
             </div>
-            <span className="text-[10px] text-stone-400 font-mono">kiwalibooth</span>
+
+            {/* Recessed Ejection Mouth / Slot where photostrip emerges */}
+            <div className="w-60 sm:w-64 h-2 bg-stone-950 dark:bg-black rounded-full shadow-inner border border-theme-primary/20" />
           </div>
 
           {/* Ejected Photo Strip - Exact cropped dimensions */}
@@ -218,8 +236,8 @@ export const DownloadScreen: React.FC = () => {
         isOpen={showShootAnotherConfirm}
         title="Start fresh session?"
         message="Wait! Your pictures will not be saved. Download them first or they will be gone forever."
-        confirmLabel="Yes, Start Fresh"
-        cancelLabel="Keep Photostrip"
+        confirmLabel="Leave & Start Fresh"
+        cancelLabel="Stay in Booth"
         onConfirm={handleConfirmShootAnother}
         onCancel={() => setShowShootAnotherConfirm(false)}
       />

@@ -82,15 +82,15 @@ export const ReviewScreen: React.FC = () => {
           <div>
             <button
               onClick={() => setStep('capture')}
-              className="inline-flex items-center gap-1 text-xs text-stone-500 hover:text-stone-900 dark:hover:text-white mb-1 cursor-pointer transition-colors"
+              className="inline-flex items-center gap-1 text-xs text-black dark:text-stone-300 hover:text-theme-primary mb-1 cursor-pointer transition-colors"
             >
               <ArrowLeft className="w-3.5 h-3.5" />
               <span>Back to Camera</span>
             </button>
-            <h2 className="text-2xl sm:text-3xl font-fredoka font-semibold text-stone-900 dark:text-white">
+            <h2 className="text-2xl sm:text-3xl font-fredoka font-semibold text-theme-primary">
               Review your shots
             </h2>
-            <p className="text-xs text-stone-500 dark:text-stone-400 mt-0.5">
+            <p className="text-xs text-black dark:text-stone-300 mt-0.5 font-sans">
               Check your poses. You can retake or replace any frame before styling in studio.
             </p>
           </div>
@@ -98,7 +98,7 @@ export const ReviewScreen: React.FC = () => {
 
         {/* Grid of Shots */}
         <div
-          className={`grid gap-4 ${
+          className={`grid gap-3 sm:gap-4 ${
             layout.shotsCount === 1
               ? 'max-w-xs mx-auto grid-cols-1'
               : layout.shotsCount === 2
@@ -129,7 +129,7 @@ export const ReviewScreen: React.FC = () => {
                     </div>
                   )}
 
-                  <div className="absolute top-1.5 left-1.5 bg-black/60 backdrop-blur-sm text-white px-2 py-0.5 rounded-md text-[10px] font-mono">
+                  <div className="absolute top-2 left-2 bg-theme-primary text-white shadow-xs px-2.5 py-0.5 rounded-md text-xs font-fredoka font-bold flex items-center justify-center select-none">
                     #{slot.id + 1}
                   </div>
                 </div>

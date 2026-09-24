@@ -377,14 +377,14 @@ export const CaptureScreen: React.FC = () => {
         <div className="w-full flex items-center justify-between gap-4 mb-3">
           <button
             onClick={handleBack}
-            className="inline-flex items-center gap-1 text-xs text-stone-500 dark:text-stone-400 hover:text-stone-900 dark:hover:text-white cursor-pointer transition-colors"
+            className="inline-flex items-center gap-1 text-xs text-black dark:text-stone-300 hover:text-theme-primary cursor-pointer transition-colors"
           >
             <ArrowLeft className="w-3.5 h-3.5" />
             <span>{retakeIndex !== null ? 'Cancel Retake' : 'Back'}</span>
           </button>
 
           {/* Slot Progress Indicator */}
-          <div className="flex items-center gap-2 bg-white dark:bg-stone-900 px-3 py-1.5 rounded-xl border border-stone-200 dark:border-stone-800 text-xs font-medium text-stone-700 dark:text-stone-300">
+          <div className="flex items-center gap-2 bg-white dark:bg-stone-900 px-3 py-1.5 rounded-xl border border-stone-200 dark:border-stone-800 text-xs font-medium text-black dark:text-stone-300">
             <span>
               {retakeIndex !== null
                 ? `Retaking Shot #${retakeIndex + 1}`
@@ -399,9 +399,9 @@ export const CaptureScreen: React.FC = () => {
                     key={s.id}
                     onClick={() => setCurrentSlotTarget(s.id)}
                     title={`Select slot #${s.id + 1}`}
-                    className={`w-5 h-5 rounded-md text-[10px] font-mono flex items-center justify-center transition-all cursor-pointer ${
+                    className={`w-5 h-5 rounded-md text-[10px] font-fredoka font-semibold flex items-center justify-center transition-all cursor-pointer ${
                       isCurrent
-                        ? 'soft-btn-coral !p-0 !text-white font-bold ring-2 ring-kiwali-coral/30'
+                        ? 'soft-btn-coral !p-0 !text-white font-bold ring-2 ring-theme-primary/30'
                         : isFilled
                         ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800'
                         : 'bg-stone-100 dark:bg-stone-800 text-stone-500 dark:text-stone-400 border border-stone-200 dark:border-stone-700 hover:bg-stone-200'
@@ -422,7 +422,7 @@ export const CaptureScreen: React.FC = () => {
         )}
 
         {/* Camera Viewfinder */}
-        <div className="relative w-full aspect-[4/3] max-h-[480px] bg-stone-900 rounded-2xl overflow-hidden border border-stone-200 dark:border-stone-800 flex items-center justify-center">
+        <div className="relative w-full aspect-[4/3] max-h-[480px] [max-height:min(480px,45svh)] bg-stone-900 rounded-2xl overflow-hidden border border-stone-200 dark:border-stone-800 flex items-center justify-center">
           <video
             ref={videoRef}
             autoPlay
@@ -436,11 +436,11 @@ export const CaptureScreen: React.FC = () => {
           {/* Camera Error / Fallback Banner */}
           {hasCameraAccess === false && (
             <div className="p-6 text-center max-w-sm bg-white dark:bg-stone-900 rounded-2xl border border-stone-200 dark:border-stone-800 mx-4">
-              <AlertCircle className="w-8 h-8 text-kiwali-coral mx-auto mb-2" />
-              <h3 className="font-fredoka font-semibold text-base text-stone-900 dark:text-white mb-1">
+              <AlertCircle className="w-8 h-8 text-theme-primary mx-auto mb-2" />
+              <h3 className="font-fredoka font-semibold text-base text-black dark:text-white mb-1">
                 Camera Not Available
               </h3>
-              <p className="text-xs text-stone-500 dark:text-stone-400 mb-4">{errorMessage}</p>
+              <p className="text-xs text-black dark:text-stone-300 mb-4 font-sans">{errorMessage}</p>
 
               <div className="flex flex-col gap-2">
                 <label className="soft-btn-coral text-xs py-2.5 px-4 cursor-pointer flex items-center justify-center gap-1.5">
@@ -459,13 +459,13 @@ export const CaptureScreen: React.FC = () => {
                   onClick={handleUseMockPhotos}
                   className="soft-btn-secondary text-xs py-2 px-4 cursor-pointer flex items-center justify-center gap-1.5"
                 >
-                  <Sparkles className="w-3.5 h-3.5" />
+                  <Sparkles className="w-3.5 h-3.5 text-theme-primary" />
                   <span>Use Sample Photos</span>
                 </button>
 
                 <button
                   onClick={() => setRetryTrigger(prev => prev + 1)}
-                  className="text-[11px] text-stone-400 hover:text-stone-700 dark:hover:text-stone-200 underline mt-1 cursor-pointer"
+                  className="text-[11px] text-stone-400 hover:text-black dark:hover:text-stone-200 underline mt-1 cursor-pointer"
                 >
                   Retry Camera
                 </button>
@@ -477,10 +477,10 @@ export const CaptureScreen: React.FC = () => {
           <div className="absolute inset-4 pointer-events-none border border-white/20 rounded-xl flex flex-col justify-between p-3">
             <div className="flex justify-between items-center text-white/80 text-[11px]">
               <div className="flex items-center gap-1.5 bg-black/40 px-2.5 py-0.5 rounded-md">
-                <div className="w-1.5 h-1.5 rounded-full bg-red-400 animate-pulse" />
+                <div className="w-1.5 h-1.5 rounded-full bg-theme-primary animate-pulse" />
                 <span>LIVE</span>
               </div>
-              <span className="text-[10px] text-white/70 font-mono">
+              <span className="text-[10px] text-white/90 font-fredoka font-medium">
                 {layout.name}
               </span>
             </div>
@@ -495,11 +495,11 @@ export const CaptureScreen: React.FC = () => {
             >
               <div className="w-24 h-24 rounded-2xl bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-800 flex items-center justify-center shadow-lg">
                 {countdown > 0 ? (
-                  <span className="font-fredoka font-bold text-5xl text-stone-900 dark:text-white">
+                  <span className="font-fredoka font-bold text-5xl text-theme-primary">
                     {countdown}
                   </span>
                 ) : (
-                  <div className="text-center font-fredoka font-semibold text-lg text-kiwali-coral leading-tight">
+                  <div className="text-center font-fredoka font-semibold text-lg text-theme-primary leading-tight">
                     Smile!
                   </div>
                 )}
@@ -511,7 +511,7 @@ export const CaptureScreen: React.FC = () => {
         {/* Control Area: Row 1 (Primary) & Row 2 (Secondary) */}
         <div className="w-full mt-4 bg-white dark:bg-stone-900 p-4 rounded-2xl border border-stone-200 dark:border-stone-800 space-y-3">
           {/* ROW 1: PRIMARY ACTION BUTTONS */}
-          <div className="flex items-center justify-center gap-3 w-full">
+          <div className="flex flex-col xs:flex-row items-center justify-center gap-3 w-full">
             <button
               onClick={startCountdownSequence}
               disabled={isCapturing}

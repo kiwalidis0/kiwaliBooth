@@ -7,23 +7,28 @@ export default {
   darkMode: 'class',
   theme: {
     extend: {
+      screens: {
+        'xs': '400px',
+      },
       colors: {
-        'kiwali-coral': '#FF6B81',
+        'theme-primary': 'rgb(var(--theme-primary-rgb, 255 107 129) / <alpha-value>)',
+        'theme-hover': 'var(--theme-primary-hover, #FF526C)',
+        'theme-soft': 'rgb(var(--theme-soft-rgb, 255 228 232) / <alpha-value>)',
+        'theme-border': 'var(--theme-primary-border, rgba(255, 107, 129, 0.4))',
+        'kiwali-coral': 'rgb(var(--theme-primary-rgb, 255 107 129) / <alpha-value>)',
+        'kiwali-soft-pink': 'rgb(var(--theme-soft-rgb, 255 228 232) / <alpha-value>)',
         'kiwali-cream': '#FFFFFF',
         'kiwali-bg': '#FFFFFF',
         'kiwali-card': '#FFFFFF',
-        'kiwali-ink': '#1C1917',
-        'kiwali-muted': '#78716C',
-        'kiwali-soft-pink': '#FFE4E8',
+        'kiwali-ink': '#000000',
+        'kiwali-muted': '#52525B',
         'kiwali-soft-yellow': '#FEF3C7',
         'kiwali-soft-blue': '#E0F2FE',
         'kiwali-soft-purple': '#F3E8FF',
       },
       fontFamily: {
-        sans: ['"Plus Jakarta Sans"', 'system-ui', 'sans-serif'],
+        sans: ['"Open Sans"', 'system-ui', 'sans-serif'],
         fredoka: ['"Fredoka"', 'cursive', 'sans-serif'],
-        gaegu: ['"Gaegu"', 'cursive', 'sans-serif'],
-        mono: ['"Space Mono"', 'monospace'],
       },
       boxShadow: {
         'xs': '0 1px 2px 0 rgba(0, 0, 0, 0.05)',

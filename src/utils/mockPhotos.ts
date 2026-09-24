@@ -80,7 +80,7 @@ export function createMockSelfie(themeIndex: number): string {
 
     <!-- Subtle footer label -->
     <rect x="200" y="405" width="200" height="26" rx="13" fill="#FFFFFF" opacity="0.85"/>
-    <text x="300" y="422" font-family="'Plus Jakarta Sans', sans-serif" font-weight="600" font-size="11" fill="#44403C" text-anchor="middle" letter-spacing="1">${t.caption}</text>
+    <text x="300" y="422" font-family="'Open Sans', sans-serif" font-weight="600" font-size="11" fill="#44403C" text-anchor="middle" letter-spacing="1">${t.caption}</text>
   </svg>`;
 
   return `data:image/svg+xml;utf8,${encodeURIComponent(svg)}`;

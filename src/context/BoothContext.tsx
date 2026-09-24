@@ -14,42 +14,57 @@ import { TEMPLATES } from '../data/templates';
 import { setSoundMuted } from '../utils/audio';
 import { BoothContext } from './boothContextValue';
 
-const THEME_PALETTES: Record<ColorTheme, { primary: string; hover: string; soft: string; border: string }> = {
+const THEME_PALETTES: Record<
+  ColorTheme,
+  { primary: string; hover: string; soft: string; border: string; rgb: string; softRgb: string }
+> = {
   pink: {
     primary: '#FF6B81',
     hover: '#FF526C',
     soft: '#FFE4E8',
     border: 'rgba(255, 107, 129, 0.4)',
+    rgb: '255 107 129',
+    softRgb: '255 228 232',
   },
   blue: {
     primary: '#3B82F6',
     hover: '#2563EB',
     soft: '#DBEAFE',
     border: 'rgba(59, 130, 246, 0.4)',
+    rgb: '59 130 246',
+    softRgb: '219 234 254',
   },
   'pastel-red': {
     primary: '#F87171',
     hover: '#EF4444',
     soft: '#FEE2E2',
     border: 'rgba(248, 113, 113, 0.4)',
+    rgb: '248 113 113',
+    softRgb: '254 226 226',
   },
   green: {
     primary: '#10B981',
     hover: '#059669',
     soft: '#D1FAE5',
     border: 'rgba(16, 185, 129, 0.4)',
+    rgb: '16 185 129',
+    softRgb: '209 250 229',
   },
   purple: {
     primary: '#A855F7',
     hover: '#9333EA',
     soft: '#F3E8FF',
     border: 'rgba(168, 85, 247, 0.4)',
+    rgb: '168 85 247',
+    softRgb: '243 232 255',
   },
   amber: {
     primary: '#F59E0B',
     hover: '#D97706',
     soft: '#FEF3C7',
     border: 'rgba(245, 158, 11, 0.4)',
+    rgb: '245 158 11',
+    softRgb: '254 243 199',
   },
 };
 
@@ -113,7 +128,7 @@ export const BoothProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 
   const [dateStamp, setDateStamp] = useState<DateStampConfig>({
     enabled: true,
-    font: 'Space Mono',
+    font: 'Fredoka',
     color: '#111116',
     format: 'YYYY.MM.DD',
     customText: getFormattedDate('YYYY.MM.DD'),
@@ -140,6 +155,8 @@ export const BoothProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     root.style.setProperty('--theme-primary-hover', palette.hover);
     root.style.setProperty('--theme-primary-soft', palette.soft);
     root.style.setProperty('--theme-primary-border', palette.border);
+    root.style.setProperty('--theme-primary-rgb', palette.rgb);
+    root.style.setProperty('--theme-soft-rgb', palette.softRgb);
     try {
       localStorage.setItem('kb_theme', colorTheme);
     } catch {

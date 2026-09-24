@@ -8,9 +8,11 @@ import {
   Layers,
   Sliders,
   Info,
-  RotateCw
+  RotateCw,
+  Download
 } from 'lucide-react';
 import { useBooth } from '../context/useBooth';
+import { usePWAInstall } from '../hooks/usePWAInstall';
 import { MOCK_SELFIE_LIST } from '../utils/mockPhotos';
 import type { LayoutId } from '../types/photobooth';
 
@@ -61,6 +63,7 @@ const STRIP_CARDS: StripPreviewData[] = [
 
 export const LandingScreen: React.FC<LandingScreenProps> = ({ onOpenPrivacy }) => {
   const { setStep, setSelectedLayoutId } = useBooth();
+  const { canInstall, promptInstall } = usePWAInstall();
   const containerRef = useRef<HTMLDivElement>(null);
   const deckRef = useRef<HTMLDivElement>(null);
 
@@ -109,8 +112,10 @@ export const LandingScreen: React.FC<LandingScreenProps> = ({ onOpenPrivacy }) =
           Capture memories. <br />
           <span className="text-kiwali-coral">Print your cutouts.</span>
         </h1>
-        <p className="text-base sm:text-lg text-stone-600 dark:text-stone-300 font-sans max-w-xl mx-auto leading-relaxed">
-          Authentic photostrips right in your browser. Webcam countdowns, multi-shot strips, studio color grading, and instant client-side downloads.
+        <p className="text-base sm:text-lg text-black dark:text-stone-200 font-sans max-w-xl mx-auto leading-relaxed">
+          No apps, no cloud, no accounts. <br />
+          Capture and save your own photobooth strips directly in your browser.
+          Webcam countdowns, multi-shot strips, studio color grading, and instant downloads.
         </p>
 
         {/* Start Button */}
@@ -125,6 +130,17 @@ export const LandingScreen: React.FC<LandingScreenProps> = ({ onOpenPrivacy }) =
           </button>
         </div>
       </div>
+
+      {/* PWA Install Banner — only shown when browser supports it and app is not installed */}
+      {canInstall && (
+        <button
+          onClick={promptInstall}
+          className="mt-2 mb-2 inline-flex items-center gap-1.5 px-4 py-2 rounded-full bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-700 text-xs font-medium text-stone-600 dark:text-stone-300 hover:border-theme-primary hover:text-theme-primary transition-colors cursor-pointer shadow-sm"
+        >
+          <Download className="w-3.5 h-3.5" />
+          <span>Add to Home Screen</span>
+        </button>
+      )}
 
       {/* Interactive Stacked Photo Strips Showcase */}
       <div className="w-full max-w-md my-6 flex flex-col items-center select-none">
@@ -141,7 +157,7 @@ export const LandingScreen: React.FC<LandingScreenProps> = ({ onOpenPrivacy }) =
         <div
           ref={deckRef}
           onClick={handleNextCard}
-          className="relative w-44 sm:w-52 h-[460px] sm:h-[490px] flex items-center justify-center cursor-pointer group mb-2"
+          className="relative w-44 sm:w-52 h-[min(460px,55svh)] sm:h-[490px] flex items-center justify-center cursor-pointer group mb-2"
           title="Click to see next strip"
         >
           {STRIP_CARDS.map((strip, idx) => {
@@ -194,7 +210,7 @@ export const LandingScreen: React.FC<LandingScreenProps> = ({ onOpenPrivacy }) =
                   <div className="font-fredoka font-semibold text-xs text-stone-900 dark:text-white">
                     {strip.name}
                   </div>
-                  <div className="font-mono text-[9px] text-stone-400">
+                  <div className="font-sans font-medium text-[9px] text-stone-400">
                     {strip.subtitle}
                   </div>
                 </div>
@@ -234,10 +250,10 @@ export const LandingScreen: React.FC<LandingScreenProps> = ({ onOpenPrivacy }) =
       {/* Emphasized Reassurance Section: 3 Pillars */}
       <div className="mt-16 sm:mt-24 w-full max-w-4xl">
         <div className="text-center mb-6">
-          <h2 className="text-xl sm:text-2xl font-fredoka font-semibold text-stone-900 dark:text-white">
+          <h2 className="text-xl sm:text-2xl font-fredoka font-semibold text-theme-primary">
             Engineered for Privacy &amp; Creativity
           </h2>
-          <p className="text-xs text-stone-500 dark:text-stone-400 mt-1">
+          <p className="text-xs text-black dark:text-stone-300 mt-1">
             Built completely client-side in your browser memory
           </p>
         </div>
@@ -246,20 +262,20 @@ export const LandingScreen: React.FC<LandingScreenProps> = ({ onOpenPrivacy }) =
           {/* Pillar 1: 100% In-Browser Memory */}
           <div className="p-5 rounded-2xl bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-800 flex flex-col justify-between">
             <div>
-              <div className="w-9 h-9 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 flex items-center justify-center text-emerald-600 dark:text-emerald-400 mb-3">
+              <div className="w-9 h-9 rounded-xl bg-theme-soft/50 dark:bg-stone-800 border border-theme-primary/30 flex items-center justify-center text-theme-primary mb-3">
                 <ShieldCheck className="w-5 h-5" />
               </div>
-              <h3 className="font-fredoka font-semibold text-base text-stone-900 dark:text-white mb-1">
+              <h3 className="font-fredoka font-semibold text-base text-black dark:text-white mb-1">
                 100% In-Browser Memory
               </h3>
-              <p className="text-xs text-stone-500 dark:text-stone-400 leading-relaxed">
+              <p className="text-xs text-black dark:text-stone-300 leading-relaxed font-sans">
                 Zero cloud uploads, zero external databases. All webcam frames and canvas exports live only in temporary device memory.
               </p>
             </div>
             <div className="mt-4 pt-3 border-t border-stone-100 dark:border-stone-800">
               <button
                 onClick={onOpenPrivacy}
-                className="text-[11px] text-emerald-700 dark:text-emerald-400 font-medium hover:underline inline-flex items-center gap-1 cursor-pointer"
+                className="text-[11px] text-theme-primary font-medium hover:underline inline-flex items-center gap-1 cursor-pointer"
               >
                 <Info className="w-3 h-3" />
                 <span>Read Privacy Architecture</span>
@@ -270,17 +286,17 @@ export const LandingScreen: React.FC<LandingScreenProps> = ({ onOpenPrivacy }) =
           {/* Pillar 2: 1-4 Cuts & Overlays */}
           <div className="p-5 rounded-2xl bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-800 flex flex-col justify-between">
             <div>
-              <div className="w-9 h-9 rounded-xl bg-kiwali-soft-pink dark:bg-stone-800 border border-kiwali-coral/30 flex items-center justify-center text-kiwali-coral mb-3">
+              <div className="w-9 h-9 rounded-xl bg-theme-soft/50 dark:bg-stone-800 border border-theme-primary/30 flex items-center justify-center text-theme-primary mb-3">
                 <Layers className="w-5 h-5" />
               </div>
-              <h3 className="font-fredoka font-semibold text-base text-stone-900 dark:text-white mb-1">
+              <h3 className="font-fredoka font-semibold text-base text-black dark:text-white mb-1">
                 1–4 Cuts &amp; Canva Overlays
               </h3>
-              <p className="text-xs text-stone-500 dark:text-stone-400 leading-relaxed">
+              <p className="text-xs text-black dark:text-stone-300 leading-relaxed font-sans">
                 Choose single polaroids, double cutouts, triple stories, or 4-cut classic photostrips. Or upload your custom Canva transparent PNG frame.
               </p>
             </div>
-            <div className="mt-4 pt-3 border-t border-stone-100 dark:border-stone-800 text-[11px] text-stone-400">
+            <div className="mt-4 pt-3 border-t border-stone-100 dark:border-stone-800 text-[11px] text-stone-600 dark:text-stone-400">
               High-resolution export with exact cropped dimensions
             </div>
           </div>
@@ -288,17 +304,17 @@ export const LandingScreen: React.FC<LandingScreenProps> = ({ onOpenPrivacy }) =
           {/* Pillar 3: Filters, Stickers & Stamps */}
           <div className="p-5 rounded-2xl bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-800 flex flex-col justify-between">
             <div>
-              <div className="w-9 h-9 rounded-xl bg-purple-50 dark:bg-purple-950/40 border border-purple-200 dark:border-purple-800 flex items-center justify-center text-purple-600 dark:text-purple-400 mb-3">
+              <div className="w-9 h-9 rounded-xl bg-theme-soft/50 dark:bg-stone-800 border border-theme-primary/30 flex items-center justify-center text-theme-primary mb-3">
                 <Sliders className="w-5 h-5" />
               </div>
-              <h3 className="font-fredoka font-semibold text-base text-stone-900 dark:text-white mb-1">
+              <h3 className="font-fredoka font-semibold text-base text-black dark:text-white mb-1">
                 Filters, Stickers &amp; Stamps
               </h3>
-              <p className="text-xs text-stone-500 dark:text-stone-400 leading-relaxed">
+              <p className="text-xs text-black dark:text-stone-300 leading-relaxed font-sans">
                 Apply studio color grading, auto-snapping photo crops, custom transparent PNG stickers with resizers, and vintage photobooth date stamps.
               </p>
             </div>
-            <div className="mt-4 pt-3 border-t border-stone-100 dark:border-stone-800 text-[11px] text-stone-400">
+            <div className="mt-4 pt-3 border-t border-stone-100 dark:border-stone-800 text-[11px] text-stone-600 dark:text-stone-400">
               Interactive drag &amp; drop canvas editor
             </div>
           </div>

@@ -55,23 +55,23 @@ export const LayoutSelectScreen: React.FC = () => {
       <div>
         <button
           onClick={() => setStep('landing')}
-          className="inline-flex items-center gap-1 text-xs text-stone-500 dark:text-stone-400 hover:text-stone-900 dark:hover:text-white mb-2 cursor-pointer transition-colors"
+          className="inline-flex items-center gap-1 text-xs text-black dark:text-stone-300 hover:text-theme-primary mb-2 cursor-pointer transition-colors"
         >
           <ArrowLeft className="w-3.5 h-3.5" />
           <span>Back to Home</span>
         </button>
-        <h2 className="text-2xl sm:text-3xl font-fredoka font-semibold text-stone-900 dark:text-white">
+        <h2 className="text-2xl sm:text-3xl font-fredoka font-semibold text-theme-primary">
           Choose layout &amp; theme
         </h2>
-        <p className="text-xs text-stone-500 dark:text-stone-400 mt-1">
+        <p className="text-xs text-black dark:text-stone-300 mt-1 font-sans">
           Pick your strip cuts and styling before opening the camera.
         </p>
       </div>
 
       {/* Section 1: Layout Selection */}
       <div>
-        <div className="flex items-center gap-1.5 text-xs font-semibold text-stone-700 dark:text-stone-300 uppercase tracking-wider mb-3">
-          <Layers className="w-3.5 h-3.5 text-kiwali-coral" />
+        <div className="flex items-center gap-1.5 text-xs font-fredoka font-semibold text-theme-primary uppercase tracking-wider mb-3">
+          <Layers className="w-3.5 h-3.5 text-theme-primary" />
           <span>1. Photobooth Layout</span>
         </div>
 
@@ -84,7 +84,7 @@ export const LayoutSelectScreen: React.FC = () => {
                 onClick={() => setSelectedLayoutId(layout.id as LayoutId)}
                 className={`bg-white dark:bg-stone-900 rounded-2xl p-3.5 cursor-pointer border-2 transition-all text-left relative flex flex-col justify-between ${
                   isSelected
-                    ? 'border-kiwali-coral bg-kiwali-soft-pink/10 dark:bg-stone-800/40'
+                    ? 'border-theme-primary bg-theme-soft/20 dark:bg-stone-800/40 ring-2 ring-theme-primary/30'
                     : 'border-stone-200 dark:border-stone-800 hover:border-stone-300 dark:hover:border-stone-700'
                 }`}
               >
@@ -98,7 +98,7 @@ export const LayoutSelectScreen: React.FC = () => {
                     {layout.slots.map((_, i) => (
                       <div
                         key={i}
-                        className="w-full bg-stone-100 dark:bg-stone-800 rounded-[2px] flex-1 flex items-center justify-center text-[7px] text-stone-400 font-mono"
+                        className="w-full bg-stone-100 dark:bg-stone-800 rounded-[2px] flex-1 flex items-center justify-center text-[7px] text-stone-600 dark:text-stone-400 font-fredoka font-semibold"
                       >
                         {i + 1}
                       </div>
@@ -108,18 +108,18 @@ export const LayoutSelectScreen: React.FC = () => {
 
                 <div>
                   <div className="flex items-center justify-between">
-                    <span className="font-fredoka font-semibold text-sm text-stone-900 dark:text-white">
+                    <span className={`font-fredoka font-semibold text-sm ${isSelected ? 'text-theme-primary' : 'text-black dark:text-white'}`}>
                       {layout.name}
                     </span>
                     <div className="w-4 h-4 flex-shrink-0 flex items-center justify-center">
                       {isSelected && (
-                        <div className="w-4 h-4 rounded-full bg-kiwali-coral text-white flex items-center justify-center">
+                        <div className="w-4 h-4 rounded-full bg-theme-primary text-white flex items-center justify-center shadow-xs">
                           <Check className="w-2.5 h-2.5" />
                         </div>
                       )}
                     </div>
                   </div>
-                  <p className="text-[11px] text-stone-500 dark:text-stone-400 mt-0.5">
+                  <p className="text-[11px] text-black dark:text-stone-300 mt-0.5">
                     {layout.shotsCount} {layout.shotsCount === 1 ? 'Cut' : 'Cuts'}
                   </p>
                 </div>
@@ -131,8 +131,8 @@ export const LayoutSelectScreen: React.FC = () => {
 
       {/* Section 2: Template Selection - Fixed width & reserved space to avoid container resizing */}
       <div>
-        <div className="flex items-center gap-1.5 text-xs font-semibold text-stone-700 dark:text-stone-300 uppercase tracking-wider mb-3">
-          <Palette className="w-3.5 h-3.5 text-kiwali-coral" />
+        <div className="flex items-center gap-1.5 text-xs font-fredoka font-semibold text-theme-primary uppercase tracking-wider mb-3">
+          <Palette className="w-3.5 h-3.5 text-theme-primary" />
           <span>2. Built-in Theme</span>
         </div>
 
@@ -145,7 +145,7 @@ export const LayoutSelectScreen: React.FC = () => {
                 onClick={() => setSelectedTemplateId(tmpl.id)}
                 className={`p-3.5 rounded-2xl bg-white dark:bg-stone-900 border-2 cursor-pointer transition-all flex items-center gap-3 ${
                   isSelected
-                    ? 'border-kiwali-coral bg-kiwali-soft-pink/10 dark:bg-stone-800/40'
+                    ? 'border-theme-primary bg-theme-soft/20 dark:bg-stone-800/40 ring-2 ring-theme-primary/30'
                     : 'border-stone-200 dark:border-stone-800 hover:border-stone-300 dark:hover:border-stone-700'
                 }`}
               >
@@ -160,10 +160,10 @@ export const LayoutSelectScreen: React.FC = () => {
                 </div>
 
                 <div className="flex-1 min-w-0">
-                  <div className="font-medium text-xs text-stone-900 dark:text-white truncate">
+                  <div className={`font-semibold text-xs truncate ${isSelected ? 'text-theme-primary' : 'text-black dark:text-white'}`}>
                     {tmpl.name}
                   </div>
-                  <div className="text-[10px] text-stone-400 capitalize">
+                  <div className="text-[10px] text-stone-600 dark:text-stone-400 capitalize">
                     {tmpl.theme}
                   </div>
                 </div>
@@ -171,7 +171,7 @@ export const LayoutSelectScreen: React.FC = () => {
                 {/* Reserved space to prevent card width resize */}
                 <div className="w-4 h-4 flex-shrink-0 flex items-center justify-center">
                   {isSelected && (
-                    <Check className="w-3.5 h-3.5 text-kiwali-coral" />
+                    <Check className="w-3.5 h-3.5 text-theme-primary" />
                   )}
                 </div>
               </div>
@@ -184,18 +184,18 @@ export const LayoutSelectScreen: React.FC = () => {
       <div className="bg-white dark:bg-stone-900 rounded-2xl border border-stone-200 dark:border-stone-800 p-4">
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
           <div>
-            <div className="font-medium text-xs text-stone-900 dark:text-white">
+            <div className="font-fredoka font-semibold text-sm text-theme-primary">
               Optional: Upload Custom Frame Overlay
             </div>
-            <p className="text-[11px] text-stone-500 dark:text-stone-400 mt-0.5">
+            <p className="text-[11px] text-black dark:text-stone-300 mt-0.5">
               Transparent PNG sized for {activeLayout.width} × {activeLayout.height} px
             </p>
           </div>
 
           {customOverlayUrl ? (
             <div className="flex items-center gap-3">
-              <span className="text-xs text-emerald-700 bg-emerald-50 dark:bg-emerald-950/40 px-2.5 py-1 rounded-lg border border-emerald-200 dark:border-emerald-800 font-medium flex items-center gap-1">
-                <Check className="w-3 h-3 text-emerald-600" />
+              <span className="text-xs text-theme-primary bg-theme-soft/50 dark:bg-stone-800 px-2.5 py-1 rounded-lg border border-theme-primary/30 font-medium flex items-center gap-1">
+                <Check className="w-3 h-3 text-theme-primary" />
                 Custom Frame Active
               </span>
               <button
@@ -210,7 +210,7 @@ export const LayoutSelectScreen: React.FC = () => {
               onClick={() => fileInputRef.current?.click()}
               className="soft-btn-secondary text-xs py-2 px-3 flex items-center gap-1.5"
             >
-              <Upload className="w-3.5 h-3.5 text-stone-500" />
+              <Upload className="w-3.5 h-3.5 text-theme-primary" />
               <span>Upload PNG</span>
             </button>
           )}
@@ -227,8 +227,8 @@ export const LayoutSelectScreen: React.FC = () => {
 
       {/* Prominent Bottom CTA Bar */}
       <div className="pt-4 border-t border-stone-200 dark:border-stone-800 flex flex-col sm:flex-row items-center justify-between gap-4">
-        <div className="text-xs text-stone-500 dark:text-stone-400 text-center sm:text-left">
-          Selected: <span className="font-semibold text-stone-800 dark:text-stone-200">{activeLayout.name}</span> ({activeLayout.shotsCount} {activeLayout.shotsCount === 1 ? 'cut' : 'cuts'})
+        <div className="text-xs text-black dark:text-stone-300 text-center sm:text-left">
+          Selected: <span className="font-semibold text-theme-primary">{activeLayout.name}</span> ({activeLayout.shotsCount} {activeLayout.shotsCount === 1 ? 'cut' : 'cuts'})
         </div>
 
         <button

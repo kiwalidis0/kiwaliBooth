@@ -333,7 +333,14 @@ export const EditorScreen: React.FC = () => {
   useEffect(() => {
     const updateScale = () => {
       if (containerRef.current) {
-        const availableHeight = window.innerHeight - 240;
+        const isMobile = window.innerWidth < 768;
+        // On mobile (stacked layout): cap to 48% of the true viewport height
+        // On desktop (side-by-side): use the container's own rendered height
+        const availableHeight = isMobile
+          ? window.innerHeight * 0.48
+          : containerRef.current.clientHeight > 200
+            ? containerRef.current.clientHeight - 100
+            : window.innerHeight - 280;
         const availableWidth = containerRef.current.clientWidth - 40;
         const scaleH = availableHeight / layout.height;
         const scaleW = availableWidth / layout.width;
@@ -439,22 +446,22 @@ export const EditorScreen: React.FC = () => {
         <div>
           <button
             onClick={() => setStep('review')}
-            className="inline-flex items-center gap-1 text-xs text-stone-500 hover:text-stone-900 dark:hover:text-white mb-1 cursor-pointer transition-colors"
+            className="inline-flex items-center gap-1 text-xs text-black dark:text-stone-300 hover:text-theme-primary mb-1 cursor-pointer transition-colors"
           >
             <ArrowLeft className="w-3.5 h-3.5" />
             <span>Back to Review</span>
           </button>
-          <h2 className="text-2xl font-fredoka font-semibold text-stone-900 dark:text-white">
+          <h2 className="text-2xl font-fredoka font-semibold text-theme-primary">
             Studio Editor
           </h2>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+      <div className="grid grid-cols-1 md:grid-cols-12 gap-6 items-start">
         {/* Left Column: Photostrip Canvas Preview */}
         <div
           ref={containerRef}
-          className="lg:col-span-7 bg-stone-50 dark:bg-stone-900 border border-stone-200 dark:border-stone-800 rounded-2xl p-4 sm:p-6 flex flex-col items-center justify-center min-h-[520px] relative"
+          className="md:col-span-7 bg-stone-50 dark:bg-stone-900 border border-stone-200 dark:border-stone-800 rounded-2xl p-4 sm:p-6 flex flex-col items-center justify-center relative"
         >
           {/* Responsive Frame Navigation Bar - NEVER clips off */}
           <div className="w-full flex items-center justify-between mb-3 px-3 py-2 rounded-xl bg-white dark:bg-stone-800 border border-stone-200 dark:border-stone-700 shadow-sm max-w-sm">
@@ -472,7 +479,7 @@ export const EditorScreen: React.FC = () => {
                   <button
                     key={s.id}
                     onClick={() => setSelectedSlotIndex(s.id)}
-                    className={`w-7 h-7 rounded-lg text-xs font-mono font-medium transition-all cursor-pointer ${
+                    className={`w-7 h-7 rounded-lg text-xs font-fredoka font-semibold transition-all cursor-pointer ${
                       selectedSlotIndex === s.id
                         ? 'soft-btn-coral !p-0 !text-white font-bold'
                         : 'bg-stone-100 dark:bg-stone-700 text-stone-600 dark:text-stone-300 hover:bg-stone-200'
@@ -500,8 +507,8 @@ export const EditorScreen: React.FC = () => {
             Click frame to select • Drag photo to pan • Drag/rotate stickers with handles
           </div>
 
-          {/* Konva Stage Container with Scale Transform */}
-          <div className="relative flex items-center justify-center">
+          {/* Konva Stage Container — touch-action:none prevents scroll conflict on mobile */}
+          <div className="relative flex items-center justify-center" style={{ touchAction: 'none' }}>
             <div
               className="rounded-xl overflow-hidden bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-700 shadow-md"
               style={{
@@ -635,7 +642,7 @@ export const EditorScreen: React.FC = () => {
         </div>
 
         {/* Right Column: Clean Studio Controls */}
-        <div className="lg:col-span-5 bg-white dark:bg-stone-900 rounded-2xl border border-stone-200 dark:border-stone-800 p-5 space-y-5">
+        <div className="md:col-span-5 bg-white dark:bg-stone-900 rounded-2xl border border-stone-200 dark:border-stone-800 p-5 space-y-5">
           {/* Tab Selector */}
           <div className="grid grid-cols-4 gap-1 p-1 bg-stone-100 dark:bg-stone-800 rounded-xl">
             {[
@@ -652,8 +659,8 @@ export const EditorScreen: React.FC = () => {
                   onClick={() => setActiveTab(tab.id as typeof activeTab)}
                   className={`flex flex-col items-center py-2 px-1 rounded-lg text-xs font-medium transition-all cursor-pointer ${
                     isActive
-                      ? 'bg-white dark:bg-stone-900 text-stone-900 dark:text-white border border-stone-200 dark:border-stone-700 shadow-sm'
-                      : 'text-stone-500 hover:text-stone-900 dark:hover:text-white'
+                      ? 'bg-theme-soft/50 dark:bg-stone-800 text-theme-primary border border-theme-primary shadow-xs font-semibold'
+                      : 'text-stone-600 dark:text-stone-400 hover:text-black dark:hover:text-white'
                   }`}
                 >
                   <Icon className="w-3.5 h-3.5 mb-0.5" />
@@ -667,7 +674,7 @@ export const EditorScreen: React.FC = () => {
           {activeTab === 'filter' && (
             <div className="space-y-4">
               <div className="flex items-center justify-between text-xs">
-                <span className="font-semibold text-stone-800 dark:text-stone-200">Color Grading</span>
+                <span className="font-fredoka font-semibold text-theme-primary">Color Grading</span>
                 <label className="flex items-center gap-1.5 text-stone-500 dark:text-stone-400 cursor-pointer">
                   <input
                     type="checkbox"
@@ -711,7 +718,7 @@ export const EditorScreen: React.FC = () => {
           {activeTab === 'zoom' && (
             <div className="space-y-4">
               <div className="flex items-center justify-between text-xs">
-                <span className="font-semibold text-stone-800 dark:text-stone-200">Zoom Frame #{selectedSlotIndex + 1}</span>
+                <span className="font-fredoka font-semibold text-theme-primary">Zoom Frame #{selectedSlotIndex + 1}</span>
                 <button
                   onClick={() => updatePhoto(selectedSlotIndex, { x: 0, y: 0, scale: 1 })}
                   className="text-stone-400 hover:text-stone-700 dark:hover:text-stone-200 underline flex items-center gap-1 cursor-pointer"
@@ -735,12 +742,12 @@ export const EditorScreen: React.FC = () => {
                   />
                   <ZoomIn className="w-4 h-4 text-stone-400" />
                 </div>
-                <div className="text-right text-[11px] text-stone-400 font-mono">
+                <div className="text-right text-[11px] text-stone-400 font-sans font-medium">
                   {Math.round((selectedPhoto?.scale || 1) * 100)}%
                 </div>
               </div>
 
-              <p className="text-[11px] text-stone-500 dark:text-stone-400 bg-stone-50 dark:bg-stone-800 p-2.5 rounded-xl border border-stone-200 dark:border-stone-700">
+              <p className="text-[11px] text-black dark:text-stone-300 font-sans bg-stone-50 dark:bg-stone-800 p-2.5 rounded-xl border border-stone-200 dark:border-stone-700">
                 Auto-snap active: Photo edges automatically lock to frame boundaries so no gaps appear.
               </p>
             </div>
@@ -750,7 +757,7 @@ export const EditorScreen: React.FC = () => {
           {activeTab === 'date' && (
             <div className="space-y-4">
               <div className="flex items-center justify-between text-xs">
-                <span className="font-semibold text-stone-800 dark:text-stone-200">Date Stamp &amp; Memory Text</span>
+                <span className="font-fredoka font-semibold text-theme-primary">Date Stamp &amp; Memory Text</span>
                 <label className="flex items-center gap-1.5 text-stone-500 dark:text-stone-400 cursor-pointer">
                   <input
                     type="checkbox"
@@ -786,10 +793,8 @@ export const EditorScreen: React.FC = () => {
                     </label>
                     <div className="grid grid-cols-2 gap-1.5">
                       {[
-                        { id: 'Space Mono', name: 'Space Mono' },
                         { id: 'Fredoka', name: 'Fredoka' },
-                        { id: 'Gaegu', name: 'Gaegu' },
-                        { id: 'Plus Jakarta Sans', name: 'Sans' },
+                        { id: 'Open Sans', name: 'Open Sans' },
                       ].map(f => (
                         <button
                           key={f.id}
@@ -813,7 +818,7 @@ export const EditorScreen: React.FC = () => {
                         <Type className="w-3.5 h-3.5" />
                         <span>Text Size</span>
                       </div>
-                      <span className="font-mono text-[10px] text-stone-400">
+                      <span className="font-sans font-medium text-[10px] text-stone-400">
                         {dateStamp.fontSize || 20}px
                       </span>
                     </div>
@@ -912,7 +917,7 @@ export const EditorScreen: React.FC = () => {
           {activeTab === 'stickers' && (
             <div className="space-y-4">
               <div className="flex items-center justify-between text-xs">
-                <span className="font-semibold text-stone-800 dark:text-stone-200">Stickers &amp; Decor</span>
+                <span className="font-fredoka font-semibold text-theme-primary">Stickers &amp; Decor</span>
                 {stickers.length > 0 && (
                   <button
                     onClick={() => {

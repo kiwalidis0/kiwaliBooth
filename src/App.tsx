@@ -33,12 +33,15 @@ const MainContent: React.FC<MainContentProps> = ({ onOpenPrivacy }) => {
 };
 
 const AppLayout: React.FC = () => {
-  const { step } = useBooth();
+  const { step, captureOrientation } = useBooth();
   const [isPrivacyOpen, setIsPrivacyOpen] = useState<boolean>(false);
+
+  // Auto-hide the navbar when in landscape capture mode
+  const hideNavbar = step === 'capture' && captureOrientation === 'landscape';
 
   return (
     <div className="min-h-screen flex flex-col bg-white dark:bg-[#0F0F12] text-black dark:text-white font-sans antialiased selection:bg-theme-soft selection:text-theme-primary transition-colors duration-200">
-      <Navbar />
+      {!hideNavbar && <Navbar />}
       <MainContent onOpenPrivacy={() => setIsPrivacyOpen(true)} />
 
       {/* Hide footer completely when not on the landing page */}

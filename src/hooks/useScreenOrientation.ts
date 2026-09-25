@@ -1,40 +1,91 @@
 import { useState, useEffect } from 'react';
 
-/**
- * Returns true when the physical device screen is in portrait orientation.
- * Uses the Screen Orientation API with a matchMedia fallback.
- *
- * Useful for showing a "rotate your device" prompt when the user has selected
- * landscape mode but is holding the phone in portrait.
- */
-export function useScreenOrientation(): boolean {
-  const isPortrait = (): boolean => {
-    if (typeof window === 'undefined') return true;
-    // Prefer Screen Orientation API (accurate, no resize needed)
-    if (window.screen?.orientation?.type) {
-      return window.screen.orientation.type.startsWith('portrait');
-    }
-    // Fallback: window dimensions
-    return window.innerHeight >= window.innerWidth;
-  };
+export interface ScreenOrientationState {
+  /** True when the physical device screen is held in portrait */
+  isPortrait: boolean;
+  /** True when the physical device screen is held in landscape */
+  isPhysicalLandscape: boolean;
+  /** True when device is held in landscape AND screen height is constrained (phones in landscape: <= 540px) */
+  isMobileLandscape: boolean;
+  /** True on mobile / touch devices or compact mobile viewports */
+  isMobile: boolean;
+  /** Screen orientation angle: 0, 90, 180, 270 */
+  angle: number;
+}
 
-  const [isPortraitDevice, setIsPortraitDevice] = useState<boolean>(isPortrait);
+function getOrientationState(): ScreenOrientationState {
+  if (typeof window === 'undefined') {
+    return {
+      isPortrait: true,
+      isPhysicalLandscape: false,
+      isMobileLandscape: false,
+      isMobile: false,
+      angle: 0,
+    };
+  }
+
+  // 1. Check Screen Orientation API
+  const screenType = window.screen?.orientation?.type;
+  const angle = window.screen?.orientation?.angle ?? 0;
+
+  let isPortrait = true;
+  if (screenType) {
+    isPortrait = screenType.startsWith('portrait');
+  } else {
+    // Fallback to window dimensions
+    isPortrait = window.innerHeight >= window.innerWidth;
+  }
+
+  const isPhysicalLandscape = !isPortrait;
+  // Mobile landscape: viewport height is short (e.g. phones in landscape are 360px-430px)
+  const isMobileLandscape = isPhysicalLandscape && window.innerHeight <= 540;
+
+  const isTouchDevice = 'ontouchstart' in window || (navigator.maxTouchPoints ?? 0) > 0;
+  const isSmallViewport = window.innerWidth <= 768 || window.innerHeight <= 540;
+  const isMobile = isMobileLandscape || (isTouchDevice && isSmallViewport);
+
+  return {
+    isPortrait,
+    isPhysicalLandscape,
+    isMobileLandscape,
+    isMobile,
+    angle,
+  };
+}
+
+/**
+ * Hook to detect physical device orientation with mobile landscape awareness.
+ */
+export function useScreenOrientation(): ScreenOrientationState {
+  const [orientation, setOrientation] = useState<ScreenOrientationState>(getOrientationState);
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
 
-    const handler = () => setIsPortraitDevice(isPortrait());
+    const updateOrientation = () => {
+      setOrientation(getOrientationState());
+    };
 
-    // Screen Orientation API (Chrome, Safari 16.4+, Firefox)
+    // 1. Screen Orientation API listener
     if (window.screen?.orientation) {
-      window.screen.orientation.addEventListener('change', handler);
-      return () => window.screen.orientation.removeEventListener('change', handler);
+      window.screen.orientation.addEventListener('change', updateOrientation);
     }
 
-    // Fallback: listen to window resize
-    window.addEventListener('resize', handler);
-    return () => window.removeEventListener('resize', handler);
+    // 2. matchMedia listener for orientation changes
+    const mql = window.matchMedia('(orientation: landscape)');
+    mql.addEventListener('change', updateOrientation);
+
+    // 3. Window resize listener as final fallback
+    window.addEventListener('resize', updateOrientation);
+
+    return () => {
+      if (window.screen?.orientation) {
+        window.screen.orientation.removeEventListener('change', updateOrientation);
+      }
+      mql.removeEventListener('change', updateOrientation);
+      window.removeEventListener('resize', updateOrientation);
+    };
   }, []);
 
-  return isPortraitDevice;
+  return orientation;
 }

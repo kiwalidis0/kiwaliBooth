@@ -8,6 +8,7 @@ interface FilmStripProps {
   currentSlotTarget: number;
   onSelectSlot: (idx: number) => void;
   onDeleteSlot: (idx: number) => void;
+  compact?: boolean;
 }
 
 /**
@@ -22,6 +23,7 @@ export const FilmStrip: React.FC<FilmStripProps> = ({
   currentSlotTarget,
   onSelectSlot,
   onDeleteSlot,
+  compact = false,
 }) => {
   if (photos.length === 0) return null;
 
@@ -29,7 +31,10 @@ export const FilmStrip: React.FC<FilmStripProps> = ({
     <div
       role="list"
       aria-label="Captured photos"
-      className="w-full flex items-center gap-2 overflow-x-auto py-1.5 px-0.5 scroll-smooth"
+      className={[
+        'w-full flex items-center gap-2 overflow-x-auto scroll-smooth',
+        compact ? 'py-0.5 px-0.5' : 'py-1.5 px-0.5',
+      ].join(' ')}
       style={{ scrollbarWidth: 'none' }}
     >
       {Array.from({ length: shotsCount }).map((_, idx) => {
@@ -47,7 +52,8 @@ export const FilmStrip: React.FC<FilmStripProps> = ({
               aria-label={photo ? `Shot ${idx + 1} — tap to target` : `Shot ${idx + 1} — empty`}
               aria-current={isCurrent ? 'true' : undefined}
               className={[
-                'relative w-14 h-14 rounded-lg overflow-hidden border-2 cursor-pointer transition-all',
+                'relative rounded-lg overflow-hidden border-2 cursor-pointer transition-all',
+                compact ? 'w-10 h-10' : 'w-14 h-14',
                 'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-theme-primary focus-visible:ring-offset-1',
                 isCurrent
                   ? 'border-theme-primary ring-2 ring-theme-primary/30 scale-105'

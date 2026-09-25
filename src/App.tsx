@@ -35,7 +35,7 @@ const AppLayout: React.FC = () => {
   const [isPrivacyOpen, setIsPrivacyOpen] = useState<boolean>(false);
 
   return (
-    <div className="min-h-screen flex flex-col bg-white dark:bg-[#0F0F12] text-kiwali-ink dark:text-stone-100 font-sans antialiased selection:bg-kiwali-soft-pink selection:text-kiwali-coral transition-colors duration-200">
+    <div className="min-h-screen flex flex-col bg-white dark:bg-[#0F0F12] text-black dark:text-white font-sans antialiased selection:bg-theme-soft selection:text-theme-primary transition-colors duration-200">
       <Navbar />
       <MainContent onOpenPrivacy={() => setIsPrivacyOpen(true)} />
 

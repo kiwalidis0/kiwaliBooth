@@ -8,32 +8,72 @@
   --theme-primary-hover: #FF526C;
   --theme-primary-soft: #FFE4E8;
   --theme-primary-border: rgba(255, 107, 129, 0.4);
+  --theme-primary-rgb: 255 107 129;
+  --theme-soft-rgb: 255 228 232;
+
+  /* Safe area insets for notched/pill phones (viewport-fit=cover) */
+  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+  --safe-left: env(safe-area-inset-left, 0px);
+  --safe-right: env(safe-area-inset-right, 0px);
 }
 
 @layer base {
   html {
     scrollbar-gutter: stable;
+    /* Prevent font size bump on iOS landscape rotation */
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
   }
 
   body {
     margin: 0;
     min-height: 100vh;
     background-color: #FFFFFF;
-    color: #1C1917;
+    color: #000000;
     overflow-x: hidden;
-    font-feature-settings: "cv02", "cv03", "cv04", "cv11";
     transition: background-color 0.2s ease, color 0.2s ease;
   }
 
   html.dark body,
   body.dark {
     background-color: #0F0F12 !important;
-    color: #F4F4F5 !important;
+    color: #FFFFFF;
   }
 
   html:not(.dark) body {
     background-color: #FFFFFF !important;
-    color: #1C1917 !important;
+    color: #000000;
+  }
+
+  /* Dedicated theme color for main headings */
+  h1, h2, .theme-heading {
+    color: var(--theme-primary);
+  }
+
+  /* Sub-headings default to black text for clear contrast across all themes */
+  h3, h4, h5, h6 {
+    color: #000000;
+  }
+
+  html.dark h3, html.dark h4, html.dark h5, html.dark h6,
+  body.dark h3, body.dark h4, body.dark h5, body.dark h6 {
+    color: #FFFFFF;
+  }
+
+  /* Universal cursor text selection highlight matching theme */
+  ::selection {
+    background-color: var(--theme-primary-soft, #FFE4E8) !important;
+    color: var(--theme-primary, #FF6B81) !important;
+  }
+
+  /* Prevent double-tap zoom on interactive elements for better mobile UX */
+  button,
+  [role="button"],
+  label[for],
+  select,
+  input[type="range"] {
+    touch-action: manipulation;
   }
 }
 
@@ -43,7 +83,7 @@
 }
 
 .soft-btn-primary {
-  @apply inline-flex items-center justify-center font-medium px-6 py-2.5 rounded-xl bg-stone-900 text-white hover:bg-stone-800 dark:bg-stone-100 dark:text-stone-900 dark:hover:bg-white active:scale-[0.98] transition-all duration-150 cursor-pointer select-none;
+  @apply inline-flex items-center justify-center font-medium px-6 py-2.5 rounded-xl bg-black text-white hover:bg-stone-800 dark:bg-stone-100 dark:text-black dark:hover:bg-white active:scale-[0.98] transition-all duration-150 cursor-pointer select-none;
 }
 
 .soft-btn-coral {
@@ -56,7 +96,12 @@
 }
 
 .soft-btn-secondary {
-  @apply inline-flex items-center justify-center font-medium px-5 py-2 rounded-xl bg-white dark:bg-stone-900 text-stone-800 dark:text-stone-200 border border-stone-300 dark:border-stone-700 hover:bg-stone-50 dark:hover:bg-stone-800 hover:border-stone-400 active:scale-[0.98] transition-all duration-150 cursor-pointer select-none;
+  @apply inline-flex items-center justify-center font-medium px-5 py-2 rounded-xl bg-white dark:bg-stone-900 text-black dark:text-stone-200 border border-stone-300 dark:border-stone-700 hover:bg-stone-50 dark:hover:bg-stone-800 hover:border-stone-400 active:scale-[0.98] transition-all duration-150 cursor-pointer select-none;
+}
+
+/* Critical Red Danger Button for Alerts */
+.soft-btn-danger {
+  @apply inline-flex items-center justify-center font-semibold px-5 py-2 rounded-xl bg-red-600 hover:bg-red-700 text-white active:scale-[0.98] transition-all duration-150 cursor-pointer select-none border border-transparent shadow-sm;
 }
 
 /* Custom scrollbars */

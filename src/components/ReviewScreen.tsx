@@ -15,6 +15,7 @@ import type { CapturedPhoto } from '../types/photobooth';
 export const ReviewScreen: React.FC = () => {
   const {
     selectedLayoutId,
+    totalRequiredShots,
     photos,
     setPhotos,
     setRetakeIndex,
@@ -22,6 +23,8 @@ export const ReviewScreen: React.FC = () => {
   } = useBooth();
 
   const layout = LAYOUTS[selectedLayoutId];
+  const totalSlotsCount = Math.max(1, totalRequiredShots || layout?.shotsCount || photos.length || 1);
+  const slotIndices = Array.from({ length: totalSlotsCount }, (_, i) => i);
   const fileInputRefs = useRef<{ [key: number]: HTMLInputElement | null }>({});
   const [showRetakeAllConfirm, setShowRetakeAllConfirm] = useState<boolean>(false);
 
@@ -72,25 +75,25 @@ export const ReviewScreen: React.FC = () => {
     }
   };
 
-  const isComplete = photos.length >= layout.shotsCount;
+  const isComplete = photos.length >= totalSlotsCount;
 
   return (
     <>
-      <div className="py-8 px-4 max-w-4xl mx-auto">
+      <div className="py-8 px-4 max-w-4xl mx-auto pb-28 sm:pb-8">
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-6">
           <div>
             <button
               onClick={() => setStep('capture')}
-              className="inline-flex items-center gap-1 text-xs text-stone-500 hover:text-stone-900 dark:hover:text-white mb-1 cursor-pointer transition-colors"
+              className="hidden sm:inline-flex items-center gap-1 text-xs text-black dark:text-stone-300 hover:text-theme-primary mb-1 cursor-pointer transition-colors"
             >
               <ArrowLeft className="w-3.5 h-3.5" />
               <span>Back to Camera</span>
             </button>
-            <h2 className="text-2xl sm:text-3xl font-fredoka font-semibold text-stone-900 dark:text-white">
+            <h2 className="text-2xl sm:text-3xl font-fredoka font-semibold text-theme-primary">
               Review your shots
             </h2>
-            <p className="text-xs text-stone-500 dark:text-stone-400 mt-0.5">
+            <p className="text-xs text-black dark:text-stone-300 mt-0.5 font-sans">
               Check your poses. You can retake or replace any frame before styling in studio.
             </p>
           </div>
@@ -98,20 +101,22 @@ export const ReviewScreen: React.FC = () => {
 
         {/* Grid of Shots */}
         <div
-          className={`grid gap-4 ${
-            layout.shotsCount === 1
+          className={`grid gap-3 sm:gap-4 ${
+            totalSlotsCount === 1
               ? 'max-w-xs mx-auto grid-cols-1'
-              : layout.shotsCount === 2
+              : totalSlotsCount === 2
               ? 'grid-cols-2 max-w-md mx-auto'
+              : totalSlotsCount === 3
+              ? 'grid-cols-1 sm:grid-cols-3 max-w-2xl mx-auto'
               : 'grid-cols-2 sm:grid-cols-4'
           }`}
         >
-          {layout.slots.map((slot) => {
-            const photo = photos.find(p => p.slotIndex === slot.id);
+          {slotIndices.map((slotId) => {
+            const photo = photos.find(p => p.slotIndex === slotId);
 
             return (
               <div
-                key={slot.id}
+                key={slotId}
                 className="bg-white dark:bg-stone-900 rounded-2xl p-2.5 border border-stone-200 dark:border-stone-800 flex flex-col justify-between"
               >
                 {/* Photo Display Card */}
@@ -119,7 +124,7 @@ export const ReviewScreen: React.FC = () => {
                   {photo ? (
                     <img
                       src={photo.dataUrl}
-                      alt={`Shot #${slot.id + 1}`}
+                      alt={`Shot #${slotId + 1}`}
                       className="w-full h-full object-cover"
                     />
                   ) : (
@@ -129,15 +134,15 @@ export const ReviewScreen: React.FC = () => {
                     </div>
                   )}
 
-                  <div className="absolute top-1.5 left-1.5 bg-black/60 backdrop-blur-sm text-white px-2 py-0.5 rounded-md text-[10px] font-mono">
-                    #{slot.id + 1}
+                  <div className="absolute top-2 left-2 bg-theme-primary text-white shadow-xs px-2.5 py-0.5 rounded-md text-xs font-fredoka font-bold flex items-center justify-center select-none">
+                    #{slotId + 1}
                   </div>
                 </div>
 
                 {/* Retake & Replace actions */}
                 <div className="flex items-center gap-1.5 pt-1">
                   <button
-                    onClick={() => handleRetakeFrame(slot.id)}
+                    onClick={() => handleRetakeFrame(slotId)}
                     className="flex-1 py-1.5 px-2 rounded-lg bg-stone-50 dark:bg-stone-800 hover:bg-stone-100 dark:hover:bg-stone-700 text-stone-700 dark:text-stone-300 text-xs font-medium border border-stone-200 dark:border-stone-700 transition-colors flex items-center justify-center gap-1 cursor-pointer"
                   >
                     <RotateCcw className="w-3 h-3 text-stone-500" />
@@ -145,18 +150,18 @@ export const ReviewScreen: React.FC = () => {
                   </button>
 
                   <button
-                    onClick={() => fileInputRefs.current[slot.id]?.click()}
+                    onClick={() => fileInputRefs.current[slotId]?.click()}
                     className="p-1.5 rounded-lg bg-stone-50 dark:bg-stone-800 hover:bg-stone-100 dark:hover:bg-stone-700 text-stone-600 dark:text-stone-300 border border-stone-200 dark:border-stone-700 transition-colors cursor-pointer"
                     title="Upload replacement photo"
                   >
                     <Upload className="w-3 h-3" />
                     <input
                       ref={(el) => {
-                        fileInputRefs.current[slot.id] = el;
+                        fileInputRefs.current[slotId] = el;
                       }}
                       type="file"
                       accept="image/*"
-                      onChange={e => handleReplaceFile(slot.id, e)}
+                      onChange={e => handleReplaceFile(slotId, e)}
                       className="hidden"
                     />
                   </button>
@@ -168,25 +173,34 @@ export const ReviewScreen: React.FC = () => {
 
         {/* Prominent Bottom CTA Bar */}
         <div className="mt-8 pt-4 border-t border-stone-200 dark:border-stone-800 flex flex-col sm:flex-row items-center justify-between gap-3">
-          <button
-            onClick={() => setShowRetakeAllConfirm(true)}
-            className="w-full sm:w-auto soft-btn-secondary text-sm px-5 py-3 flex items-center justify-center gap-2 cursor-pointer"
-          >
-            <RotateCcw className="w-4 h-4 text-stone-500" />
-            <span>Retake All Shots</span>
-          </button>
+          {totalSlotsCount > 1 ? (
+            <button
+              onClick={() => setShowRetakeAllConfirm(true)}
+              className="w-full sm:w-auto soft-btn-secondary text-sm px-5 py-3 flex items-center justify-center gap-2 cursor-pointer"
+            >
+              <RotateCcw className="w-4 h-4 text-stone-500" />
+              <span>Retake All Shots</span>
+            </button>
+          ) : (
+            <div className="hidden sm:block text-xs text-stone-500 dark:text-stone-400">
+              Photo review complete. Continue to Studio.
+            </div>
+          )}
 
-          <button
-            onClick={() => setStep('editor')}
-            disabled={!isComplete}
-            className={`w-full sm:w-auto soft-btn-coral text-sm px-8 py-3.5 flex items-center justify-center gap-2 cursor-pointer ${
-              !isComplete ? 'opacity-50 cursor-not-allowed' : ''
-            }`}
-          >
-            <Sliders className="w-4 h-4" />
-            <span>Proceed to Studio</span>
-            <ArrowRight className="w-4 h-4" />
-          </button>
+          {/* Desktop Proceed to Studio Button (Strictly hidden on mobile, displayed only on desktop sm:flex) */}
+          <div className="hidden sm:flex items-center">
+            <button
+              onClick={() => setStep('editor')}
+              disabled={!isComplete}
+              className={`soft-btn-coral text-sm px-8 py-3.5 flex items-center justify-center gap-2 cursor-pointer ${
+                !isComplete ? 'opacity-50 cursor-not-allowed' : ''
+              }`}
+            >
+              <Sliders className="w-4 h-4" />
+              <span>Proceed to Studio</span>
+              <ArrowRight className="w-4 h-4" />
+            </button>
+          </div>
         </div>
       </div>
 

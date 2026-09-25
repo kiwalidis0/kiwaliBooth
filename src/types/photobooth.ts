@@ -61,7 +61,7 @@ export interface TemplateConfig {
   customOverlayUrl?: string; // transparent PNG uploaded from Canva
 }
 
-export type StampFont = 'Plus Jakarta Sans' | 'Fredoka' | 'Gaegu' | 'Space Mono';
+export type StampFont = 'Fredoka' | 'Open Sans';
 export type StampFormat = 'YYYY.MM.DD' | 'DD.MM.YYYY' | 'custom';
 
 export interface DateStampConfig {
@@ -82,3 +82,9 @@ export interface StickerItem {
   scale: number;
   rotation: number;
 }
+
+export type CameraFacingMode = 'user' | 'environment';
+export type CaptureOrientation = 'portrait' | 'landscape';
+export type LayoutPhotoAssignments = Record<LayoutId, number[]>;
+export type FinalImagesMap = Partial<Record<LayoutId, string>>;
+

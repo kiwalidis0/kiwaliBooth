@@ -8,6 +8,11 @@ import type {
   FilterType,
   ColorTheme,
   AppFontSize,
+  CameraFacingMode,
+  CaptureOrientation,
+  LayoutPhotoAssignments,
+  FinalImagesMap,
+  TemplateConfig,
 } from '../types/photobooth';
 
 export interface BoothContextType {
@@ -15,6 +20,19 @@ export interface BoothContextType {
   setStep: (step: BoothStep) => void;
   selectedLayoutId: LayoutId;
   setSelectedLayoutId: (id: LayoutId) => void;
+  selectedLayoutIds: LayoutId[];
+  setSelectedLayoutIds: (ids: LayoutId[]) => void;
+  toggleLayoutId: (id: LayoutId) => void;
+  activeStudioLayoutId: LayoutId;
+  setActiveStudioLayoutId: (id: LayoutId) => void;
+  totalRequiredShots: number;
+  layoutPhotoAssignments: LayoutPhotoAssignments;
+  setLayoutPhotoAssignments: React.Dispatch<React.SetStateAction<LayoutPhotoAssignments>>;
+  assignPhotoToSlot: (layoutId: LayoutId, slotIndex: number, photoIndex: number) => void;
+  cameraFacingMode: CameraFacingMode;
+  setCameraFacingMode: (mode: CameraFacingMode) => void;
+  captureOrientation: CaptureOrientation;
+  setCaptureOrientation: (orientation: CaptureOrientation) => void;
   selectedTemplateId: string;
   setSelectedTemplateId: (id: string) => void;
   customOverlayUrl: string | null;
@@ -33,6 +51,9 @@ export interface BoothContextType {
   removeSticker: (id: string) => void;
   finalImage: string | null;
   setFinalImage: (url: string | null) => void;
+  finalImages: FinalImagesMap;
+  setFinalImages: React.Dispatch<React.SetStateAction<FinalImagesMap>>;
+  setFinalImageForLayout: (layoutId: LayoutId, url: string) => void;
   isMuted: boolean;
   setIsMuted: (muted: boolean) => void;
   toggleMute: () => void;
@@ -44,6 +65,15 @@ export interface BoothContextType {
   fontSize: AppFontSize;
   setFontSize: (size: AppFontSize) => void;
   resetBooth: () => void;
+  customTheme: TemplateConfig;
+  setCustomTheme: (theme: TemplateConfig) => void;
+  activeTemplate: TemplateConfig;
+  registerSaveHandler: (handler: (() => Promise<void>) | null) => void;
+  triggerSavePhotostrip: () => Promise<void>;
+  registerDownloadHandler: (handler: (() => void) | null) => void;
+  triggerDownloadPhotostrip: () => void;
+  isLaunchReady: boolean;
+  isReviewComplete: boolean;
 }
 
 export const BoothContext = createContext<BoothContextType | null>(null);

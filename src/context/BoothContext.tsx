@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import type {
   BoothStep,
   LayoutId,
@@ -8,48 +8,68 @@ import type {
   FilterType,
   ColorTheme,
   AppFontSize,
+  CameraFacingMode,
+  CaptureOrientation,
+  LayoutPhotoAssignments,
+  FinalImagesMap,
+  TemplateConfig,
 } from '../types/photobooth';
 import { LAYOUTS } from '../data/layouts';
-import { TEMPLATES } from '../data/templates';
+import { TEMPLATES, DEFAULT_CUSTOM_THEME } from '../data/templates';
 import { setSoundMuted } from '../utils/audio';
 import { BoothContext } from './boothContextValue';
 
-const THEME_PALETTES: Record<ColorTheme, { primary: string; hover: string; soft: string; border: string }> = {
+const THEME_PALETTES: Record<
+  ColorTheme,
+  { primary: string; hover: string; soft: string; border: string; rgb: string; softRgb: string }
+> = {
   pink: {
     primary: '#FF6B81',
     hover: '#FF526C',
     soft: '#FFE4E8',
     border: 'rgba(255, 107, 129, 0.4)',
+    rgb: '255 107 129',
+    softRgb: '255 228 232',
   },
   blue: {
     primary: '#3B82F6',
     hover: '#2563EB',
     soft: '#DBEAFE',
     border: 'rgba(59, 130, 246, 0.4)',
+    rgb: '59 130 246',
+    softRgb: '219 234 254',
   },
   'pastel-red': {
     primary: '#F87171',
     hover: '#EF4444',
     soft: '#FEE2E2',
     border: 'rgba(248, 113, 113, 0.4)',
+    rgb: '248 113 113',
+    softRgb: '254 226 226',
   },
   green: {
     primary: '#10B981',
     hover: '#059669',
     soft: '#D1FAE5',
     border: 'rgba(16, 185, 129, 0.4)',
+    rgb: '16 185 129',
+    softRgb: '209 250 229',
   },
   purple: {
     primary: '#A855F7',
     hover: '#9333EA',
     soft: '#F3E8FF',
     border: 'rgba(168, 85, 247, 0.4)',
+    rgb: '168 85 247',
+    softRgb: '243 232 255',
   },
   amber: {
     primary: '#F59E0B',
     hover: '#D97706',
     soft: '#FEF3C7',
     border: 'rgba(245, 158, 11, 0.4)',
+    rgb: '245 158 11',
+    softRgb: '254 243 199',
   },
 };
 
@@ -63,12 +83,75 @@ function getFormattedDate(format: 'YYYY.MM.DD' | 'DD.MM.YYYY' = 'YYYY.MM.DD'): s
 
 export const BoothProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [step, setStep] = useState<BoothStep>('landing');
-  const [selectedLayoutId, setSelectedLayoutId] = useState<LayoutId>('classic4');
+  const [selectedLayoutIds, setSelectedLayoutIds] = useState<LayoutId[]>([]);
+  const [activeStudioLayoutId, setActiveStudioLayoutId] = useState<LayoutId>('classic4');
+  const [cameraFacingMode, setCameraFacingMode] = useState<CameraFacingMode>('user');
+  const [captureOrientation, setCaptureOrientation] = useState<CaptureOrientation>('portrait');
   const [selectedTemplateId, setSelectedTemplateIdState] = useState<string>('classic-white');
+  const [customTheme, setCustomThemeState] = useState<TemplateConfig>(() => {
+    try {
+      const saved = localStorage.getItem('kb_custom_theme');
+      if (saved) return JSON.parse(saved);
+    } catch {
+      // ignore storage errors
+    }
+    return DEFAULT_CUSTOM_THEME;
+  });
   const [customOverlayUrl, setCustomOverlayUrl] = useState<string | null>(null);
   const [photos, setPhotos] = useState<CapturedPhoto[]>([]);
   const [retakeIndex, setRetakeIndex] = useState<number | null>(null);
   const [finalImage, setFinalImage] = useState<string | null>(null);
+  const [finalImages, setFinalImages] = useState<FinalImagesMap>({});
+
+  const [layoutPhotoAssignments, setLayoutPhotoAssignments] = useState<LayoutPhotoAssignments>({
+    single: [0],
+    double: [0, 1],
+    triple: [0, 1, 2],
+    classic4: [0, 1, 2, 3],
+  });
+
+  const selectedLayoutId = selectedLayoutIds[0] || activeStudioLayoutId || 'classic4';
+  const setSelectedLayoutId = (id: LayoutId) => {
+    setSelectedLayoutIds([id]);
+    setActiveStudioLayoutId(id);
+  };
+
+  const toggleLayoutId = (id: LayoutId) => {
+    setSelectedLayoutIds(prev => {
+      const exists = prev.includes(id);
+      let updated: LayoutId[];
+      if (exists) {
+        updated = prev.filter(item => item !== id);
+      } else {
+        updated = [...prev, id];
+      }
+      if (updated.length > 0 && !updated.includes(activeStudioLayoutId)) {
+        setActiveStudioLayoutId(updated[0]);
+      }
+      return updated;
+    });
+  };
+
+  const totalRequiredShots = useMemo(() => {
+    if (selectedLayoutIds.length === 0) return 0;
+    return Math.max(...selectedLayoutIds.map(id => LAYOUTS[id]?.shotsCount || 1));
+  }, [selectedLayoutIds]);
+
+  const assignPhotoToSlot = (layoutId: LayoutId, slotIndex: number, photoIndex: number) => {
+    setLayoutPhotoAssignments(prev => {
+      const current = prev[layoutId] ? [...prev[layoutId]] : [0];
+      current[slotIndex] = photoIndex;
+      return {
+        ...prev,
+        [layoutId]: current,
+      };
+    });
+  };
+
+  const setFinalImageForLayout = (layoutId: LayoutId, url: string) => {
+    setFinalImages(prev => ({ ...prev, [layoutId]: url }));
+    setFinalImage(url);
+  };
 
   // Global Preferences with safe localStorage hydration
   const [colorTheme, setColorTheme] = useState<ColorTheme>(() => {
@@ -113,7 +196,7 @@ export const BoothProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 
   const [dateStamp, setDateStamp] = useState<DateStampConfig>({
     enabled: true,
-    font: 'Space Mono',
+    font: 'Fredoka',
     color: '#111116',
     format: 'YYYY.MM.DD',
     customText: getFormattedDate('YYYY.MM.DD'),
@@ -140,6 +223,8 @@ export const BoothProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     root.style.setProperty('--theme-primary-hover', palette.hover);
     root.style.setProperty('--theme-primary-soft', palette.soft);
     root.style.setProperty('--theme-primary-border', palette.border);
+    root.style.setProperty('--theme-primary-rgb', palette.rgb);
+    root.style.setProperty('--theme-soft-rgb', palette.softRgb);
     try {
       localStorage.setItem('kb_theme', colorTheme);
     } catch {
@@ -183,9 +268,29 @@ export const BoothProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     }
   }, [fontSize]);
 
+  const setCustomTheme = useCallback((theme: TemplateConfig) => {
+    setCustomThemeState(theme);
+    try {
+      localStorage.setItem('kb_custom_theme', JSON.stringify(theme));
+    } catch {
+      // ignore storage errors
+    }
+    setDateStamp(prev => ({
+      ...prev,
+      color: theme.textColor,
+    }));
+  }, []);
+
+  const activeTemplate = useMemo(() => {
+    if (selectedTemplateId === 'custom') {
+      return customTheme;
+    }
+    return TEMPLATES.find(t => t.id === selectedTemplateId) || TEMPLATES[0];
+  }, [selectedTemplateId, customTheme]);
+
   const setSelectedTemplateId = (id: string) => {
     setSelectedTemplateIdState(id);
-    const template = TEMPLATES.find(t => t.id === id);
+    const template = id === 'custom' ? customTheme : TEMPLATES.find(t => t.id === id);
     if (template) {
       setDateStamp(prev => ({
         ...prev,
@@ -236,11 +341,53 @@ export const BoothProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   };
 
   const resetBooth = () => {
+    setSelectedLayoutIds([]);
     setPhotos([]);
     setStickers([]);
     setRetakeIndex(null);
     setFinalImage(null);
+    setFinalImages({});
+    setLayoutPhotoAssignments({
+      single: [0],
+      double: [0, 1],
+      triple: [0, 1, 2],
+      classic4: [0, 1, 2, 3],
+    });
   };
+
+  const saveHandlerRef = useRef<(() => Promise<void>) | null>(null);
+  const registerSaveHandler = useCallback((handler: (() => Promise<void>) | null) => {
+    saveHandlerRef.current = handler;
+  }, []);
+
+  const triggerSavePhotostrip = useCallback(async () => {
+    if (saveHandlerRef.current) {
+      await saveHandlerRef.current();
+    } else {
+      setStep('download');
+    }
+  }, []);
+
+  const downloadHandlerRef = useRef<(() => void) | null>(null);
+  const registerDownloadHandler = useCallback((handler: (() => void) | null) => {
+    downloadHandlerRef.current = handler;
+  }, []);
+
+  const triggerDownloadPhotostrip = useCallback(() => {
+    if (downloadHandlerRef.current) {
+      downloadHandlerRef.current();
+    } else if (finalImage) {
+      const link = document.createElement('a');
+      link.download = `kiwalibooth-${Date.now()}.png`;
+      link.href = finalImage;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    }
+  }, [finalImage]);
+
+  const isLaunchReady = selectedLayoutIds.length > 0 && !!selectedTemplateId;
+  const isReviewComplete = totalRequiredShots > 0 && photos.length >= totalRequiredShots;
 
   return (
     <BoothContext.Provider
@@ -249,6 +396,19 @@ export const BoothProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         setStep,
         selectedLayoutId,
         setSelectedLayoutId,
+        selectedLayoutIds,
+        setSelectedLayoutIds,
+        toggleLayoutId,
+        activeStudioLayoutId,
+        setActiveStudioLayoutId,
+        totalRequiredShots,
+        layoutPhotoAssignments,
+        setLayoutPhotoAssignments,
+        assignPhotoToSlot,
+        cameraFacingMode,
+        setCameraFacingMode,
+        captureOrientation,
+        setCaptureOrientation,
         selectedTemplateId,
         setSelectedTemplateId,
         customOverlayUrl,
@@ -267,6 +427,9 @@ export const BoothProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         removeSticker,
         finalImage,
         setFinalImage,
+        finalImages,
+        setFinalImages,
+        setFinalImageForLayout,
         isMuted,
         setIsMuted,
         toggleMute,
@@ -278,6 +441,15 @@ export const BoothProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         fontSize,
         setFontSize,
         resetBooth,
+        customTheme,
+        setCustomTheme,
+        activeTemplate,
+        registerSaveHandler,
+        triggerSavePhotostrip,
+        registerDownloadHandler,
+        triggerDownloadPhotostrip,
+        isLaunchReady,
+        isReviewComplete,
       }}
     >
       {children}

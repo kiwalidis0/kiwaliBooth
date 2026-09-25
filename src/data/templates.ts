@@ -56,3 +56,14 @@ export const TEMPLATES: TemplateConfig[] = [
 export const STICKER_PRESETS = [
   '✨', '💖', '🎀', '⭐', '🌸', '🧸', '🐰', '🍒', '🦋', '🥑', '🕶️', '🔥', '📸', '💌', '🐱', '🍕'
 ];
+
+export const DEFAULT_CUSTOM_THEME: TemplateConfig = {
+  id: 'custom',
+  name: 'Custom Theme',
+  description: 'Your personalized colors & style',
+  theme: 'custom',
+  backgroundColor: '#FFF0F5',
+  borderColor: '#FFD1DC',
+  textColor: '#4A154B',
+  accentColor: '#FF6F61',
+};

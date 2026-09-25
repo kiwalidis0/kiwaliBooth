@@ -82,3 +82,9 @@ export interface StickerItem {
   scale: number;
   rotation: number;
 }
+
+export type CameraFacingMode = 'user' | 'environment';
+export type CaptureOrientation = 'portrait' | 'landscape';
+export type LayoutPhotoAssignments = Record<LayoutId, number[]>;
+export type FinalImagesMap = Partial<Record<LayoutId, string>>;
+

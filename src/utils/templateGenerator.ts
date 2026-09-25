@@ -12,10 +12,12 @@ export function generateTemplateOverlaySvg(layout: LayoutConfig, template: Templ
     brandColor = '#94A3B8';
   } else if (template.theme === 'pastel') {
     brandColor = '#A855F7';
+  } else if (template.theme === 'custom') {
+    brandColor = template.accentColor || template.textColor || '#1C1917';
   }
 
-  // Subtle clean photostrip brand mark at the very bottom
-  const footerY = height - 20;
+  // Clean photostrip brand mark at the bottom with increased presence
+  const footerY = height - 18;
 
   const decorations = `
     <g id="decorations">
@@ -25,10 +27,10 @@ export function generateTemplateOverlaySvg(layout: LayoutConfig, template: Templ
         text-anchor="middle"
         font-family="'Fredoka', sans-serif"
         font-weight="600"
-        font-size="13"
+        font-size="18"
         fill="${brandColor}"
-        opacity="0.85"
-        letter-spacing="1.5"
+        opacity="0.9"
+        letter-spacing="2"
       >kiwalibooth</text>
     </g>
   `;

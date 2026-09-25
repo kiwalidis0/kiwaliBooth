@@ -1,5 +1,14 @@
 import React, { useState } from 'react';
-import { Check } from 'lucide-react';
+import {
+  Check,
+  Layers,
+  Camera,
+  CheckSquare,
+  Sliders,
+  Download,
+  ArrowLeft,
+  ArrowRight,
+} from 'lucide-react';
 import { BrandLogo } from './BrandLogo';
 import { NavbarToolsMenu } from './NavbarToolsMenu';
 import { ConfirmModal } from './ConfirmModal';
@@ -7,16 +16,25 @@ import { useBooth } from '../context/useBooth';
 import type { BoothStep } from '../types/photobooth';
 
 export const Navbar: React.FC = () => {
-  const { step, setStep, photos, resetBooth } = useBooth();
+  const {
+    step,
+    setStep,
+    photos,
+    resetBooth,
+    isLaunchReady,
+    isReviewComplete,
+    triggerSavePhotostrip,
+    triggerDownloadPhotostrip,
+  } = useBooth();
   const [showResetConfirm, setShowResetConfirm] = useState<boolean>(false);
   const [pendingDestination, setPendingDestination] = useState<BoothStep | null>(null);
 
-  const steps: { id: BoothStep; label: string; number: number }[] = [
-    { id: 'layout', label: 'Layout', number: 1 },
-    { id: 'capture', label: 'Capture', number: 2 },
-    { id: 'review', label: 'Review', number: 3 },
-    { id: 'editor', label: 'Studio', number: 4 },
-    { id: 'download', label: 'Save', number: 5 },
+  const steps: { id: BoothStep; label: string; number: number; icon: React.FC<{ className?: string }> }[] = [
+    { id: 'layout', label: 'Layout', number: 1, icon: Layers },
+    { id: 'capture', label: 'Capture', number: 2, icon: Camera },
+    { id: 'review', label: 'Review', number: 3, icon: CheckSquare },
+    { id: 'editor', label: 'Studio', number: 4, icon: Sliders },
+    { id: 'download', label: 'Save', number: 5, icon: Download },
   ];
 
   const currentStepIndex = steps.findIndex(s => s.id === step);
@@ -33,7 +51,6 @@ export const Navbar: React.FC = () => {
   };
 
   const handleStepClick = (targetStep: BoothStep) => {
-    // If user has captured shots/active progress and clicks Layout, require confirmation
     if (targetStep === 'layout' && photos.length > 0) {
       setPendingDestination('layout');
       setShowResetConfirm(true);
@@ -54,6 +71,62 @@ export const Navbar: React.FC = () => {
     setPendingDestination(null);
   };
 
+  const handleMobileBack = () => {
+    if (step === 'layout') {
+      handleLogoClick();
+    } else if (step === 'review') {
+      handleStepClick('layout');
+    } else if (step === 'editor') {
+      setStep('review');
+    } else if (step === 'download') {
+      setStep('editor');
+    }
+  };
+
+  const currentStepConfig = steps.find(s => s.id === step);
+
+  const getMobileAction = () => {
+    if (step === 'layout') {
+      return {
+        label: 'Launch',
+        icon: Camera,
+        showArrow: true,
+        disabled: !isLaunchReady,
+        onClick: () => setStep('capture'),
+      };
+    }
+    if (step === 'review') {
+      return {
+        label: 'Studio',
+        icon: Sliders,
+        showArrow: true,
+        disabled: !isReviewComplete,
+        onClick: () => setStep('editor'),
+      };
+    }
+    if (step === 'editor') {
+      return {
+        label: 'Save',
+        icon: Download,
+        showArrow: true,
+        disabled: false,
+        onClick: () => triggerSavePhotostrip(),
+      };
+    }
+    if (step === 'download') {
+      return {
+        label: 'Save',
+        icon: Download,
+        showArrow: false,
+        disabled: false,
+        onClick: () => triggerDownloadPhotostrip(),
+      };
+    }
+    return null;
+  };
+
+  const mobileAction = getMobileAction();
+
   return (
     <>
       {/* Safe-area-aware sticky header */}
@@ -70,56 +143,41 @@ export const Navbar: React.FC = () => {
             <BrandLogo size="md" />
           </button>
 
-          {/* Step Progress — Option C: text on mobile, pills on sm+ */}
+          {/* Desktop Stepper Bar (Preserved per reference media_1790266179418.png) */}
           {step !== 'landing' && (
-            <>
-              {/* Mobile: compact "Step X of 5 · Label" */}
-              <div className="sm:hidden flex-1 text-center text-xs font-medium text-stone-500 dark:text-stone-400 truncate">
-                <span className="text-theme-primary font-semibold">
-                  Step {currentStepIndex + 1}
-                </span>
-                {' '}of {steps.length}
-                {' · '}
-                <span className="text-black dark:text-white font-semibold">
-                  {steps[currentStepIndex]?.label}
-                </span>
-              </div>
-
-              {/* sm+: full pill stepper */}
-              <nav className="hidden sm:flex items-center gap-1 bg-stone-100 dark:bg-stone-800 p-1 rounded-full border border-stone-200 dark:border-stone-700">
-                {steps.map((s, idx) => {
-                  const isActive = s.id === step;
-                  const isPast = currentStepIndex > idx;
-                  return (
-                    <button
-                      key={s.id}
-                      disabled={!isPast && !isActive}
-                      onClick={() => handleStepClick(s.id)}
-                      className={`flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium transition-all ${
+            <nav className="hidden sm:flex items-center gap-1 bg-stone-100 dark:bg-stone-800 p-1 rounded-full border border-stone-200 dark:border-stone-700">
+              {steps.map((s, idx) => {
+                const isActive = s.id === step;
+                const isPast = currentStepIndex > idx;
+                return (
+                  <button
+                    key={s.id}
+                    disabled={!isPast && !isActive}
+                    onClick={() => handleStepClick(s.id)}
+                    className={`flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium transition-all ${
+                      isActive
+                        ? 'bg-white dark:bg-stone-900 text-theme-primary border border-theme-primary shadow-sm font-semibold'
+                        : isPast
+                        ? 'text-black dark:text-stone-300 hover:text-theme-primary cursor-pointer'
+                        : 'text-stone-400 dark:text-stone-600 cursor-not-allowed'
+                    }`}
+                  >
+                    <span
+                      className={`w-3.5 h-3.5 rounded-full flex items-center justify-center text-[10px] flex-shrink-0 ${
                         isActive
-                          ? 'bg-white dark:bg-stone-900 text-theme-primary border border-theme-primary shadow-sm font-semibold'
+                          ? 'soft-btn-coral !p-0 !text-white font-bold'
                           : isPast
-                          ? 'text-black dark:text-stone-300 hover:text-theme-primary cursor-pointer'
-                          : 'text-stone-400 dark:text-stone-600 cursor-not-allowed'
+                          ? 'bg-emerald-100 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-400'
+                          : 'bg-stone-200 dark:bg-stone-700 text-stone-600 dark:text-stone-400'
                       }`}
                     >
-                      <span
-                        className={`w-3.5 h-3.5 rounded-full flex items-center justify-center text-[10px] flex-shrink-0 ${
-                          isActive
-                            ? 'soft-btn-coral !p-0 !text-white font-bold'
-                            : isPast
-                            ? 'bg-emerald-100 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-400'
-                            : 'bg-stone-200 dark:bg-stone-700 text-stone-600 dark:text-stone-400'
-                        }`}
-                      >
-                        {isPast ? <Check className="w-2 h-2" /> : s.number}
-                      </span>
-                      <span>{s.label}</span>
-                    </button>
-                  );
-                })}
-              </nav>
-            </>
+                      {isPast ? <Check className="w-2 h-2" /> : s.number}
+                    </span>
+                    <span>{s.label}</span>
+                  </button>
+                );
+              })}
+            </nav>
           )}
 
           {/* Navbar Tools Menu (Palette, Font Size, Sound, Dark Mode) */}
@@ -138,6 +196,57 @@ export const Navbar: React.FC = () => {
           </div>
         )}
       </header>
+
+      {/* Modern Floating Mobile Navbar & Action Pill — Visible on Steps 1, 3, 4, 5 (Auto-hides on Step 2 Capture) */}
+      {step !== 'landing' && step !== 'capture' && (
+        <aside
+          aria-label="Mobile Navigation & Actions"
+          className="sm:hidden fixed bottom-3 left-1/2 -translate-x-1/2 z-50 w-[calc(100vw-1.5rem)] max-w-md bg-white/95 dark:bg-stone-900/95 backdrop-blur-xl border border-stone-200/90 dark:border-stone-800 shadow-2xl rounded-full p-1.5 px-2 flex items-center justify-between gap-1.5 transition-all duration-300 animate-in fade-in slide-in-from-bottom-3 overflow-hidden"
+          style={{ marginBottom: 'var(--safe-bottom, 0px)' }}
+        >
+          {/* Left: Previous / Back Button */}
+          <div className="flex-1 flex justify-start">
+            <button
+              onClick={handleMobileBack}
+              className="h-8 px-2.5 rounded-full text-xs font-fredoka font-semibold text-stone-600 dark:text-stone-300 hover:bg-stone-100 dark:hover:bg-stone-800 flex items-center gap-1 cursor-pointer transition-colors flex-shrink-0"
+              title="Previous Step"
+            >
+              <ArrowLeft className="w-3.5 h-3.5 text-stone-500" />
+              <span>{step === 'layout' ? 'Exit' : 'Back'}</span>
+            </button>
+          </div>
+
+          {/* Center: Current Step Indicator (Resilient middle flex item, never clipped or overlapped) */}
+          <div className="flex-shrink-0 text-center px-1 pointer-events-none">
+            <div className="font-fredoka text-xs text-stone-700 dark:text-stone-300 whitespace-nowrap">
+              <span className="text-theme-primary font-bold">
+                Step {currentStepConfig?.number || 1}
+              </span>
+              <span className="text-stone-400 dark:text-stone-500 mx-1">·</span>
+              <span className="font-semibold">{currentStepConfig?.label || ''}</span>
+            </div>
+          </div>
+
+          {/* Right: Primary Action Button for this step (Sized proportionally with rounded-full nested radius) */}
+          <div className="flex-1 flex justify-end">
+            {mobileAction && (
+              <button
+                onClick={mobileAction.onClick}
+                disabled={mobileAction.disabled}
+                className={`h-8 px-3 rounded-full text-xs font-fredoka font-semibold flex items-center gap-1 transition-all flex-shrink-0 cursor-pointer ${
+                  mobileAction.disabled
+                    ? 'bg-stone-200 dark:bg-stone-800 text-stone-400 cursor-not-allowed shadow-none'
+                    : 'bg-theme-primary hover:bg-theme-primary-hover text-white shadow-xs active:scale-95'
+                }`}
+              >
+                <mobileAction.icon className="w-3.5 h-3.5" />
+                <span>{mobileAction.label}</span>
+                {mobileAction.showArrow && <ArrowRight className="w-3 h-3" />}
+              </button>
+            )}
+          </div>
+        </aside>
+      )}
 
       {/* Confirmation Modal when resetting active session */}
       <ConfirmModal

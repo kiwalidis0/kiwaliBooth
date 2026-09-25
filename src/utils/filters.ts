@@ -1,4 +1,4 @@
-import type { FilterConfig, FilterType } from '../types/photobooth';
+import type { FilterConfig, FilterType, PhotoAdjustments } from '../types/photobooth';
 
 export const FILTERS: Record<FilterType, FilterConfig> = {
   normal: {
@@ -42,11 +42,53 @@ export const FILTERS: Record<FilterType, FilterConfig> = {
 export const FILTER_LIST = Object.values(FILTERS);
 
 /**
+ * Combine preset filter with user adjustments (brightness, contrast, saturation, warmth)
+ * into a single CSS filter string for canvas/Konva.
+ */
+export function buildCompositeCssFilter(
+  filterType: FilterType,
+  adjustments?: PhotoAdjustments
+): string {
+  const parts: string[] = [];
+  const base = FILTERS[filterType];
+  if (base && base.cssFilter && base.cssFilter !== 'none') {
+    parts.push(base.cssFilter);
+  }
+
+  if (adjustments) {
+    if (adjustments.brightness !== 0) {
+      const b = 1 + adjustments.brightness / 100;
+      parts.push(`brightness(${Math.max(0, b).toFixed(2)})`);
+    }
+    if (adjustments.contrast !== 0) {
+      const c = 1 + adjustments.contrast / 100;
+      parts.push(`contrast(${Math.max(0, c).toFixed(2)})`);
+    }
+    if (adjustments.saturation !== 0) {
+      const s = 1 + adjustments.saturation / 100;
+      parts.push(`saturate(${Math.max(0, s).toFixed(2)})`);
+    }
+    if (adjustments.warmth !== 0) {
+      if (adjustments.warmth > 0) {
+        const sep = (adjustments.warmth / 100) * 0.45;
+        parts.push(`sepia(${sep.toFixed(2)})`);
+      } else {
+        const cool = adjustments.warmth * 0.25;
+        parts.push(`hue-rotate(${cool.toFixed(1)}deg)`);
+      }
+    }
+  }
+
+  return parts.length > 0 ? parts.join(' ') : 'none';
+}
+
+/**
  * Apply canvas filter rendering directly to an HTMLCanvasElement
  */
 export function applyFilterToCanvas(
   sourceCanvas: HTMLCanvasElement | HTMLImageElement,
-  filterType: FilterType
+  filterType: FilterType,
+  adjustments?: PhotoAdjustments
 ): HTMLCanvasElement {
   const width = (sourceCanvas as HTMLImageElement).naturalWidth || sourceCanvas.width || 800;
   const height = (sourceCanvas as HTMLImageElement).naturalHeight || sourceCanvas.height || 600;
@@ -57,9 +99,9 @@ export function applyFilterToCanvas(
   const ctx = canvas.getContext('2d');
   if (!ctx) return canvas;
 
-  const filter = FILTERS[filterType];
-  if (filter && filter.cssFilter && filter.cssFilter !== 'none') {
-    ctx.filter = filter.cssFilter;
+  const composite = buildCompositeCssFilter(filterType, adjustments);
+  if (composite !== 'none') {
+    ctx.filter = composite;
   }
   ctx.drawImage(sourceCanvas, 0, 0, canvas.width, canvas.height);
   ctx.filter = 'none';

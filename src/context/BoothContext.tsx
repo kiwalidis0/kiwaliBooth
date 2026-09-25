@@ -13,10 +13,13 @@ import type {
   LayoutPhotoAssignments,
   FinalImagesMap,
   TemplateConfig,
+  PhotoAdjustments,
+  SavedBoothSession,
 } from '../types/photobooth';
 import { LAYOUTS } from '../data/layouts';
 import { TEMPLATES, DEFAULT_CUSTOM_THEME } from '../data/templates';
 import { setSoundMuted } from '../utils/audio';
+import { saveSessionToDb, loadSessionFromDb, clearSessionFromDb } from '../utils/sessionStorageDb';
 import { BoothContext } from './boothContextValue';
 
 const THEME_PALETTES: Record<
@@ -204,6 +207,42 @@ export const BoothProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   });
 
   const [stickers, setStickers] = useState<StickerItem[]>([]);
+  const [savedSession, setSavedSession] = useState<SavedBoothSession | null>(null);
+
+  // Load saved session from IndexedDB on initial mount
+  useEffect(() => {
+    let isCancelled = false;
+    loadSessionFromDb().then(loaded => {
+      if (!isCancelled && loaded && loaded.photos.length > 0) {
+        setSavedSession(loaded);
+      }
+    });
+    return () => {
+      isCancelled = true;
+    };
+  }, []);
+
+  // Debounced auto-save session whenever active photos or customizations change
+  useEffect(() => {
+    if (photos.length === 0 || step === 'landing') return;
+
+    const timeout = setTimeout(() => {
+      const session: SavedBoothSession = {
+        step,
+        photos,
+        selectedLayoutIds,
+        activeStudioLayoutId,
+        selectedTemplateId,
+        customOverlayUrl,
+        dateStamp,
+        stickers,
+        timestamp: Date.now(),
+      };
+      saveSessionToDb(session).catch(() => {});
+    }, 600);
+
+    return () => clearTimeout(timeout);
+  }, [step, photos, selectedLayoutIds, activeStudioLayoutId, selectedTemplateId, customOverlayUrl, dateStamp, stickers]);
 
   // Keep audio module in sync & persist
   useEffect(() => {
@@ -340,6 +379,61 @@ export const BoothProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     setStickers(prev => prev.filter(s => s.id !== id));
   };
 
+  const restoreSession = useCallback(() => {
+    if (!savedSession) return;
+    setPhotos(savedSession.photos);
+    setSelectedLayoutIds(savedSession.selectedLayoutIds);
+    setActiveStudioLayoutId(savedSession.activeStudioLayoutId);
+    setSelectedTemplateIdState(savedSession.selectedTemplateId);
+    setCustomOverlayUrl(savedSession.customOverlayUrl);
+    setDateStamp(savedSession.dateStamp);
+    setStickers(savedSession.stickers);
+    setStep(savedSession.step || 'review');
+    setSavedSession(null);
+  }, [savedSession]);
+
+  const discardSavedSession = useCallback(() => {
+    clearSessionFromDb().catch(() => {});
+    setSavedSession(null);
+  }, []);
+
+  const updatePhotoAdjustment = useCallback((slotIndex: number, adjustments: Partial<PhotoAdjustments>) => {
+    setPhotos(prev =>
+      prev.map(p => {
+        if (p.slotIndex !== slotIndex) return p;
+        const current: PhotoAdjustments = p.adjustments || {
+          brightness: 0,
+          contrast: 0,
+          saturation: 0,
+          warmth: 0,
+        };
+        return {
+          ...p,
+          adjustments: { ...current, ...adjustments },
+        };
+      })
+    );
+  }, []);
+
+  const reorderPhotos = useCallback((fromIndex: number, toIndex: number) => {
+    setPhotos(prev => {
+      const sourcePhoto = prev.find(p => p.slotIndex === fromIndex);
+      const targetPhoto = prev.find(p => p.slotIndex === toIndex);
+
+      if (!sourcePhoto || !targetPhoto) return prev;
+
+      return prev.map(p => {
+        if (p.slotIndex === fromIndex) {
+          return { ...p, slotIndex: toIndex };
+        }
+        if (p.slotIndex === toIndex) {
+          return { ...p, slotIndex: fromIndex };
+        }
+        return p;
+      }).sort((a, b) => a.slotIndex - b.slotIndex);
+    });
+  }, []);
+
   const resetBooth = () => {
     setSelectedLayoutIds([]);
     setPhotos([]);
@@ -353,6 +447,9 @@ export const BoothProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       triple: [0, 1, 2],
       classic4: [0, 1, 2, 3],
     });
+    clearSessionFromDb().catch(() => {});
+    setSavedSession(null);
+    setStep('landing');
   };
 
   const saveHandlerRef = useRef<(() => Promise<void>) | null>(null);
@@ -422,6 +519,7 @@ export const BoothProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         dateStamp,
         setDateStamp,
         stickers,
+        setStickers,
         addSticker,
         updateSticker,
         removeSticker,
@@ -450,6 +548,11 @@ export const BoothProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         triggerDownloadPhotostrip,
         isLaunchReady,
         isReviewComplete,
+        savedSession,
+        restoreSession,
+        discardSavedSession,
+        updatePhotoAdjustment,
+        reorderPhotos,
       }}
     >
       {children}

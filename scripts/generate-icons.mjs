@@ -4,7 +4,7 @@ import { resolve, dirname } from 'path';
 import { fileURLToPath } from 'url';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
-const svgPath = resolve(__dirname, '../public/kiwalibooth.svg');
+const svgPath = resolve(__dirname, '../public/kiwaliBooth.svg');
 const svg = readFileSync(svgPath);
 
 const outputDir = resolve(__dirname, '../public');

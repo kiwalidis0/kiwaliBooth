@@ -729,6 +729,8 @@ export const CaptureScreen: React.FC = () => {
                   <Upload className="w-4 h-4" />
                   <input
                     type="file"
+                    name="photos-left"
+                    aria-label="Upload photos"
                     multiple
                     accept="image/*"
                     onChange={handleFileUpload}
@@ -792,7 +794,7 @@ export const CaptureScreen: React.FC = () => {
           <div className="flex-1 h-full max-h-full flex flex-col items-center justify-center gap-1 min-w-0 p-1 relative z-10">
             {/* Viewfinder frame */}
             <div
-              className={`relative flex-1 max-h-full rounded-2xl overflow-hidden bg-stone-950 border border-white/15 flex items-center justify-center shadow-2xl transition-all duration-300 ${
+              className={`relative flex-1 max-h-full max-w-full w-auto rounded-2xl overflow-hidden bg-stone-950 border border-white/15 flex items-center justify-center shadow-2xl transition-all duration-300 ${
                 isLandscape ? 'aspect-[500/370]' : 'aspect-[3/4]'
               }`}
             >
@@ -815,7 +817,7 @@ export const CaptureScreen: React.FC = () => {
               {/* Subtle Corner Brackets Framing */}
               <div aria-hidden className="absolute inset-0 flex items-center justify-center pointer-events-none z-10 p-3 sm:p-5">
                 <div
-                  className="relative w-full h-full max-h-full"
+                  className="relative w-full h-full max-h-full max-w-full"
                   style={{ aspectRatio: isLandscape ? '500/370' : '3/4', maxHeight: '92%' }}
                 >
                   <div className="absolute top-0 left-0 w-5 h-5 sm:w-6 sm:h-6 border-t-2 border-l-2 border-white/70 rounded-tl-sm shadow-[0_0_2px_rgba(0,0,0,0.8)]" />
@@ -853,6 +855,8 @@ export const CaptureScreen: React.FC = () => {
                       <span>Upload</span>
                       <input
                         type="file"
+                        name="photos-fallback"
+                        aria-label="Upload photos"
                         multiple
                         accept="image/*"
                         onChange={handleFileUpload}
@@ -1214,6 +1218,8 @@ export const CaptureScreen: React.FC = () => {
                   <span>Upload Photos from Device</span>
                   <input
                     type="file"
+                    name="photos-portrait-fallback"
+                    aria-label="Upload photos"
                     multiple
                     accept="image/*"
                     onChange={handleFileUpload}
@@ -1466,6 +1472,8 @@ export const CaptureScreen: React.FC = () => {
                 <input
                   ref={fileInputRef}
                   type="file"
+                  name="photos-upload-main"
+                  aria-label="Upload photos"
                   multiple
                   accept="image/*"
                   onChange={handleFileUpload}

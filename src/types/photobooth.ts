@@ -34,17 +34,37 @@ export interface FilterConfig {
   colorGrade: string; // Tailwind color or hex for swatch
 }
 
+export interface PhotoAdjustments {
+  brightness: number; // -100 to 100 (0 = neutral)
+  contrast: number;   // -100 to 100 (0 = neutral)
+  saturation: number; // -100 to 100 (0 = neutral)
+  warmth: number;     // -100 to 100 (0 = neutral)
+}
+
 export interface CapturedPhoto {
   id: string;
   slotIndex: number;
   dataUrl: string;
   filter: FilterType;
+  adjustments?: PhotoAdjustments;
   x: number; // relative pan within slot
   y: number;
   scale: number; // 1.0 = fit/cover default
   rotation: number;
   originalWidth: number;
   originalHeight: number;
+}
+
+export interface SavedBoothSession {
+  step: BoothStep;
+  photos: CapturedPhoto[];
+  selectedLayoutIds: LayoutId[];
+  activeStudioLayoutId: LayoutId;
+  selectedTemplateId: string;
+  customOverlayUrl: string | null;
+  dateStamp: DateStampConfig;
+  stickers: StickerItem[];
+  timestamp: number;
 }
 
 export type TemplateTheme = 'white' | 'colorblocks' | 'pastel' | 'noir' | 'custom';

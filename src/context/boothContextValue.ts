@@ -13,6 +13,8 @@ import type {
   LayoutPhotoAssignments,
   FinalImagesMap,
   TemplateConfig,
+  SavedBoothSession,
+  PhotoAdjustments,
 } from '../types/photobooth';
 
 export interface BoothContextType {
@@ -46,6 +48,7 @@ export interface BoothContextType {
   dateStamp: DateStampConfig;
   setDateStamp: React.Dispatch<React.SetStateAction<DateStampConfig>>;
   stickers: StickerItem[];
+  setStickers: React.Dispatch<React.SetStateAction<StickerItem[]>>;
   addSticker: (emoji: string, x?: number, y?: number) => void;
   updateSticker: (id: string, updates: Partial<StickerItem>) => void;
   removeSticker: (id: string) => void;
@@ -74,6 +77,11 @@ export interface BoothContextType {
   triggerDownloadPhotostrip: () => void;
   isLaunchReady: boolean;
   isReviewComplete: boolean;
+  savedSession: SavedBoothSession | null;
+  restoreSession: () => void;
+  discardSavedSession: () => void;
+  updatePhotoAdjustment: (slotIndex: number, adjustments: Partial<PhotoAdjustments>) => void;
+  reorderPhotos: (fromIndex: number, toIndex: number) => void;
 }
 
 export const BoothContext = createContext<BoothContextType | null>(null);

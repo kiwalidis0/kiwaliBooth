@@ -10,11 +10,18 @@ import {
   Check,
   ShieldCheck,
   Layers,
+  Smartphone,
+  Film,
+  Sparkles,
+  Repeat,
+  X,
 } from 'lucide-react';
 import { useBooth } from '../context/useBooth';
 import { LAYOUTS } from '../data/layouts';
 import { playSuccessChime } from '../utils/audio';
 import { ConfirmModal } from './ConfirmModal';
+import { QRShareModal } from './QRShareModal';
+import { createAnimatedGif } from '../utils/gifEncoder';
 import type { LayoutId } from '../types/photobooth';
 
 gsap.registerPlugin(useGSAP);
@@ -25,6 +32,7 @@ export const DownloadScreen: React.FC = () => {
     finalImages,
     selectedLayoutIds,
     activeStudioLayoutId,
+    photos,
     resetBooth,
     setStep,
     registerDownloadHandler,
@@ -37,6 +45,11 @@ export const DownloadScreen: React.FC = () => {
   const [isSavingDone, setIsSavingDone] = useState<boolean>(false);
   const [isNavigating, setIsNavigating] = useState<boolean>(false);
   const [showShootAnotherConfirm, setShowShootAnotherConfirm] = useState<boolean>(false);
+  const [showQrModal, setShowQrModal] = useState<boolean>(false);
+  const [showGifModal, setShowGifModal] = useState<boolean>(false);
+  const [isGeneratingGif, setIsGeneratingGif] = useState<boolean>(false);
+  const [gifDataUrl, setGifDataUrl] = useState<string | null>(null);
+  const [boomerang, setBoomerang] = useState<boolean>(false);
 
   // Active viewing layout if multiple layouts exist
   const [activeViewLayoutId, setActiveViewLayoutId] = useState<LayoutId>(
@@ -141,6 +154,37 @@ export const DownloadScreen: React.FC = () => {
     } catch {
       handleDownload();
     }
+  };
+
+  const generateGif = useCallback(async (useBoomerang: boolean) => {
+    if (photos.length === 0) return;
+    setIsGeneratingGif(true);
+    try {
+      const frames = photos.map(p => p.dataUrl);
+      const { dataUrl } = await createAnimatedGif(frames, { boomerang: useBoomerang, delay: 350 });
+      setGifDataUrl(dataUrl);
+    } catch (err) {
+      console.error('GIF generation failed:', err);
+    } finally {
+      setIsGeneratingGif(false);
+    }
+  }, [photos]);
+
+  const handleOpenGifModal = () => {
+    setShowGifModal(true);
+    if (!gifDataUrl && photos.length > 0) {
+      generateGif(boomerang);
+    }
+  };
+
+  const handleDownloadGif = () => {
+    if (!gifDataUrl) return;
+    const link = document.createElement('a');
+    link.download = `kiwalibooth-animated-${Date.now()}.gif`;
+    link.href = gifDataUrl;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
   };
 
   const handleBackToEditor = () => {
@@ -290,6 +334,29 @@ export const DownloadScreen: React.FC = () => {
           </div>
         )}
 
+        {/* Studio Sharing Row: Animated GIF + Send to Phone / QR */}
+        <div className="mt-3 grid grid-cols-2 gap-2.5 w-full max-w-sm">
+          {photos.length > 1 && (
+            <button
+              onClick={handleOpenGifModal}
+              className="h-11 rounded-xl bg-purple-50 dark:bg-purple-950/40 border border-purple-200 dark:border-purple-800 text-purple-700 dark:text-purple-300 hover:bg-purple-100 dark:hover:bg-purple-900/50 text-xs font-fredoka font-semibold flex items-center justify-center gap-1.5 transition-all cursor-pointer shadow-xs"
+            >
+              <Film className="w-3.5 h-3.5 text-purple-500" />
+              <span>Animated GIF</span>
+            </button>
+          )}
+
+          <button
+            onClick={() => setShowQrModal(true)}
+            className={`h-11 rounded-xl bg-stone-100 dark:bg-stone-800 border border-stone-200 dark:border-stone-700 text-stone-700 dark:text-stone-300 hover:bg-stone-200 dark:hover:bg-stone-700 text-xs font-fredoka font-semibold flex items-center justify-center gap-1.5 transition-all cursor-pointer shadow-xs ${
+              photos.length <= 1 ? 'col-span-2' : ''
+            }`}
+          >
+            <Smartphone className="w-3.5 h-3.5 text-theme-primary" />
+            <span>Send to Phone</span>
+          </button>
+        </div>
+
         {/* Secondary Action Buttons (Uniform height & spacing) */}
         <div className="mt-4 flex items-center justify-center gap-2.5 w-full max-w-sm">
           {/* Back to Editor (Desktop only — mobile uses floating navbar action) */}
@@ -328,6 +395,87 @@ export const DownloadScreen: React.FC = () => {
         cancelLabel="Stay in Booth"
         onConfirm={handleConfirmShootAnother}
         onCancel={() => setShowShootAnotherConfirm(false)}
+      />
+
+      {/* Animated GIF Preview & Download Modal */}
+      {showGifModal && (
+        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in duration-200">
+          <div className="relative w-full max-w-sm bg-white dark:bg-stone-900 rounded-2xl border border-stone-200 dark:border-stone-800 p-5 sm:p-6 shadow-2xl flex flex-col items-center text-center">
+            <button
+              onClick={() => setShowGifModal(false)}
+              className="absolute top-4 right-4 p-1.5 rounded-lg text-stone-400 hover:text-stone-700 dark:hover:text-stone-200 cursor-pointer"
+            >
+              <X className="w-5 h-5" />
+            </button>
+
+            <div className="flex items-center gap-2 mb-1">
+              <Film className="w-5 h-5 text-purple-500" />
+              <h3 className="font-fredoka font-semibold text-lg text-black dark:text-white">
+                Animated Photostrip GIF
+              </h3>
+            </div>
+            <p className="text-xs text-stone-500 dark:text-stone-400 mb-4 font-sans">
+              Looping animation of your {photos.length} captured frames
+            </p>
+
+            {/* GIF Preview Screen */}
+            <div className="w-full aspect-[4/3] rounded-xl overflow-hidden bg-stone-950 mb-4 flex items-center justify-center border border-stone-200 dark:border-stone-700">
+              {isGeneratingGif ? (
+                <div className="flex flex-col items-center gap-2 text-stone-400 text-xs">
+                  <Sparkles className="w-6 h-6 animate-spin text-purple-400" />
+                  <span>Encoding animated GIF...</span>
+                </div>
+              ) : gifDataUrl ? (
+                <img src={gifDataUrl} alt="Animated photobooth GIF" className="w-full h-full object-contain" />
+              ) : (
+                <span className="text-stone-500 text-xs">No preview available</span>
+              )}
+            </div>
+
+            {/* Boomerang ping-pong toggle */}
+            <div className="w-full flex items-center justify-between bg-stone-50 dark:bg-stone-800/60 p-2.5 rounded-xl border border-stone-100 dark:border-stone-800 mb-4">
+              <span className="text-xs text-stone-700 dark:text-stone-300 font-medium flex items-center gap-1.5">
+                <Repeat className="w-3.5 h-3.5 text-purple-500" />
+                <span>Boomerang Loop</span>
+              </span>
+              <button
+                onClick={() => {
+                  const next = !boomerang;
+                  setBoomerang(next);
+                  generateGif(next);
+                }}
+                className={`w-9 h-5 rounded-full transition-colors relative cursor-pointer ${
+                  boomerang ? 'bg-purple-600' : 'bg-stone-300 dark:bg-stone-600'
+                }`}
+              >
+                <span
+                  className={`block w-3.5 h-3.5 bg-white rounded-full transition-transform transform ${
+                    boomerang ? 'translate-x-4' : 'translate-x-1'
+                  }`}
+                />
+              </button>
+            </div>
+
+            {/* Download GIF Button */}
+            <button
+              onClick={handleDownloadGif}
+              disabled={isGeneratingGif || !gifDataUrl}
+              className={`w-full py-2.5 px-4 rounded-xl bg-purple-600 hover:bg-purple-700 text-white font-fredoka font-semibold text-xs flex items-center justify-center gap-2 cursor-pointer shadow-md transition-all ${
+                isGeneratingGif || !gifDataUrl ? 'opacity-50 cursor-not-allowed' : ''
+              }`}
+            >
+              <Download className="w-4 h-4" />
+              <span>Save Animated GIF (.gif)</span>
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* QR Code Share Modal */}
+      <QRShareModal
+        isOpen={showQrModal}
+        onClose={() => setShowQrModal(false)}
+        imageUrl={activeImage}
       />
     </>
   );

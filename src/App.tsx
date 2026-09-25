@@ -10,6 +10,7 @@ import { ReviewScreen } from './components/ReviewScreen';
 import { EditorScreen } from './components/EditorScreen';
 import { DownloadScreen } from './components/DownloadScreen';
 import { PrivacyModal } from './components/PrivacyModal';
+import { SessionRestoreBanner } from './components/SessionRestoreBanner';
 
 interface MainContentProps {
   onOpenPrivacy: () => void;
@@ -20,6 +21,7 @@ const MainContent: React.FC<MainContentProps> = ({ onOpenPrivacy }) => {
 
   return (
     <main className="flex-1 flex flex-col justify-start">
+      <SessionRestoreBanner />
       {step === 'landing' && <LandingScreen onOpenPrivacy={onOpenPrivacy} />}
       {step === 'layout' && <LayoutSelectScreen />}
       {step === 'capture' && <CaptureScreen />}

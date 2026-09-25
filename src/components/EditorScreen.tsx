@@ -27,7 +27,10 @@ import {
   Plus,
   Minus,
   RotateCw,
-  Type
+  Type,
+  Sun,
+  Undo2,
+  Redo2,
 } from 'lucide-react';
 import { useBooth } from '../context/useBooth';
 import { LAYOUTS } from '../data/layouts';
@@ -44,9 +47,10 @@ import type {
   LayoutPhotoAssignments,
   DateStampConfig,
   FinalImagesMap,
+  PhotoAdjustments,
 } from '../types/photobooth';
 
-function useFilteredImage(url: string | undefined, filter: FilterType) {
+function useFilteredImage(url: string | undefined, filter: FilterType, adjustments?: PhotoAdjustments) {
   const [element, setElement] = useState<HTMLCanvasElement | HTMLImageElement | null>(null);
 
   useEffect(() => {
@@ -61,10 +65,11 @@ function useFilteredImage(url: string | undefined, filter: FilterType) {
 
     img.onload = () => {
       if (!isMounted) return;
-      if (filter === 'normal') {
+      const hasAdj = adjustments && (adjustments.brightness !== 0 || adjustments.contrast !== 0 || adjustments.saturation !== 0 || adjustments.warmth !== 0);
+      if (filter === 'normal' && !hasAdj) {
         setElement(img);
       } else {
-        const filtered = applyFilterToCanvas(img, filter);
+        const filtered = applyFilterToCanvas(img, filter, adjustments);
         setElement(filtered);
       }
     };
@@ -77,7 +82,7 @@ function useFilteredImage(url: string | undefined, filter: FilterType) {
     return () => {
       isMounted = false;
     };
-  }, [url, filter]);
+  }, [url, filter, adjustments?.brightness, adjustments?.contrast, adjustments?.saturation, adjustments?.warmth]);
 
   return url ? element : null;
 }
@@ -108,7 +113,7 @@ function useSimpleImage(url: string | undefined | null) {
 
 interface SlotPhotoProps {
   slot: { id: number; x: number; y: number; width: number; height: number; borderRadius: number };
-  photo: { dataUrl: string; filter: FilterType; x: number; y: number; scale: number };
+  photo: { dataUrl: string; filter: FilterType; adjustments?: PhotoAdjustments; x: number; y: number; scale: number };
   isSelected: boolean;
   isExporting: boolean;
   onSelect: () => void;
@@ -123,7 +128,7 @@ const SlotPhotoItem: React.FC<SlotPhotoProps> = ({
   onSelect,
   onUpdatePosition,
 }) => {
-  const filteredImg = useFilteredImage(photo?.dataUrl, photo?.filter || 'normal');
+  const filteredImg = useFilteredImage(photo?.dataUrl, photo?.filter || 'normal', photo?.adjustments);
 
   const rawWidth = (filteredImg as HTMLImageElement)?.naturalWidth || filteredImg?.width || 800;
   const rawHeight = (filteredImg as HTMLImageElement)?.naturalHeight || filteredImg?.height || 600;
@@ -482,11 +487,14 @@ export const EditorScreen: React.FC = () => {
     assignPhotoToSlot,
     customOverlayUrl,
     photos,
+    setPhotos,
     updatePhoto,
+    updatePhotoAdjustment,
     setGlobalFilter,
     dateStamp,
     setDateStamp,
     stickers,
+    setStickers,
     addSticker,
     updateSticker,
     removeSticker,
@@ -509,9 +517,69 @@ export const EditorScreen: React.FC = () => {
 
   const [selectedSlotIndex, setSelectedSlotIndex] = useState<number>(0);
   const [selectedStickerId, setSelectedStickerId] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState<'filter' | 'zoom' | 'date' | 'stickers'>('filter');
+  const [activeTab, setActiveTab] = useState<'filter' | 'adjust' | 'zoom' | 'date' | 'stickers'>('filter');
   const [applyAllFilters, setApplyAllFilters] = useState<boolean>(true);
+  const [applyAllAdjustments, setApplyAllAdjustments] = useState<boolean>(false);
   const [isExporting, setIsExporting] = useState<boolean>(false);
+
+  // Undo / Redo history state
+  interface HistorySnapshot {
+    photos: CapturedPhoto[];
+    stickers: StickerItem[];
+    dateStamp: DateStampConfig;
+  }
+  const [history, setHistory] = useState<HistorySnapshot[]>([]);
+  const [historyIndex, setHistoryIndex] = useState<number>(-1);
+  const isHistoryNavigating = useRef(false);
+
+  // Initialize history snapshot
+  useEffect(() => {
+    if (history.length === 0 && photos.length > 0) {
+      setHistory([{ photos, stickers, dateStamp }]);
+      setHistoryIndex(0);
+    }
+  }, [photos, stickers, dateStamp, history.length]);
+
+  const handleUndo = useCallback(() => {
+    if (historyIndex > 0) {
+      isHistoryNavigating.current = true;
+      const target = history[historyIndex - 1];
+      setPhotos(target.photos);
+      setStickers(target.stickers);
+      setDateStamp(target.dateStamp);
+      setHistoryIndex(prev => prev - 1);
+    }
+  }, [history, historyIndex, setPhotos, setStickers, setDateStamp]);
+
+  const handleRedo = useCallback(() => {
+    if (historyIndex < history.length - 1) {
+      isHistoryNavigating.current = true;
+      const target = history[historyIndex + 1];
+      setPhotos(target.photos);
+      setStickers(target.stickers);
+      setDateStamp(target.dateStamp);
+      setHistoryIndex(prev => prev + 1);
+    }
+  }, [history, historyIndex, setPhotos, setStickers, setDateStamp]);
+
+  // Global keyboard shortcuts: Ctrl/Cmd+Z (Undo) and Ctrl/Cmd+Y or Ctrl/Cmd+Shift+Z (Redo)
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      const tag = (e.target as Element)?.tagName;
+      if (tag === 'INPUT' || tag === 'TEXTAREA') return;
+
+      if ((e.ctrlKey || e.metaKey) && !e.shiftKey && e.code === 'KeyZ') {
+        e.preventDefault();
+        handleUndo();
+      } else if ((e.ctrlKey || e.metaKey) && ((e.shiftKey && e.code === 'KeyZ') || e.code === 'KeyY')) {
+        e.preventDefault();
+        handleRedo();
+      }
+    };
+
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [handleUndo, handleRedo]);
 
   const [previewScale, setPreviewScale] = useState<number>(0.35);
 
@@ -538,7 +606,6 @@ export const EditorScreen: React.FC = () => {
     return () => window.removeEventListener('resize', updateScale);
   }, [layout.width, layout.height]);
 
-  const selectedPhoto = photos.find(p => p.slotIndex === selectedSlotIndex) || photos[0];
   const selectedSticker = stickers.find(s => s.id === selectedStickerId) || null;
 
   // Save Photostrip with 100% outline clearance guarantee across ALL selected layouts
@@ -601,6 +668,37 @@ export const EditorScreen: React.FC = () => {
       setGlobalFilter(filterId);
     } else {
       updatePhoto(selectedSlotIndex, { filter: filterId });
+    }
+  };
+
+  const assignedPhotoIndex = layoutPhotoAssignments[currentLayoutId]?.[selectedSlotIndex] ?? selectedSlotIndex;
+  const selectedPhoto = photos.find(p => p.slotIndex === assignedPhotoIndex) || photos[selectedSlotIndex % (photos.length || 1)];
+
+  const currentAdjustments: PhotoAdjustments = selectedPhoto?.adjustments || {
+    brightness: 0,
+    contrast: 0,
+    saturation: 0,
+    warmth: 0,
+  };
+
+  const handleAdjustmentChange = (key: keyof PhotoAdjustments, value: number) => {
+    if (applyAllAdjustments) {
+      photos.forEach(p => {
+        updatePhotoAdjustment(p.slotIndex, { [key]: value });
+      });
+    } else {
+      updatePhotoAdjustment(assignedPhotoIndex, { [key]: value });
+    }
+  };
+
+  const handleResetAdjustments = () => {
+    const reset = { brightness: 0, contrast: 0, saturation: 0, warmth: 0 };
+    if (applyAllAdjustments) {
+      photos.forEach(p => {
+        updatePhotoAdjustment(p.slotIndex, reset);
+      });
+    } else {
+      updatePhotoAdjustment(assignedPhotoIndex, reset);
     }
   };
 
@@ -702,15 +800,40 @@ export const EditorScreen: React.FC = () => {
 
             {/* Responsive Frame Navigation Bar */}
             <div className="w-full flex items-center justify-between mb-2 px-3 py-1.5 rounded-xl bg-white dark:bg-stone-800 border border-stone-200 dark:border-stone-700 shadow-sm max-w-sm">
-              <button
-                onClick={handleSelectPrevFrame}
-                title="Previous Frame"
-                className="p-1 rounded-lg hover:bg-stone-100 dark:hover:bg-stone-700 text-stone-600 dark:text-stone-300 cursor-pointer"
-              >
-                <ChevronLeft className="w-4 h-4" />
-              </button>
+              <div className="flex items-center gap-1">
+                <button
+                  onClick={handleUndo}
+                  disabled={historyIndex <= 0}
+                  title="Undo (Ctrl+Z)"
+                  aria-label="Undo"
+                  className={`p-1 rounded-lg text-stone-600 dark:text-stone-300 transition-colors ${
+                    historyIndex <= 0 ? 'opacity-30 cursor-not-allowed' : 'hover:bg-stone-100 dark:hover:bg-stone-700 cursor-pointer'
+                  }`}
+                >
+                  <Undo2 className="w-3.5 h-3.5" />
+                </button>
+                <button
+                  onClick={handleRedo}
+                  disabled={historyIndex >= history.length - 1}
+                  title="Redo (Ctrl+Y)"
+                  aria-label="Redo"
+                  className={`p-1 rounded-lg text-stone-600 dark:text-stone-300 transition-colors ${
+                    historyIndex >= history.length - 1 ? 'opacity-30 cursor-not-allowed' : 'hover:bg-stone-100 dark:hover:bg-stone-700 cursor-pointer'
+                  }`}
+                >
+                  <Redo2 className="w-3.5 h-3.5" />
+                </button>
+              </div>
 
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-1.5">
+                <button
+                  onClick={handleSelectPrevFrame}
+                  title="Previous Frame"
+                  className="p-1 rounded-lg hover:bg-stone-100 dark:hover:bg-stone-700 text-stone-600 dark:text-stone-300 cursor-pointer"
+                >
+                  <ChevronLeft className="w-4 h-4" />
+                </button>
+
                 <div className="flex gap-1">
                   {layout.slots.map(s => (
                     <button
@@ -726,18 +849,15 @@ export const EditorScreen: React.FC = () => {
                     </button>
                   ))}
                 </div>
-                <span className="text-xs font-medium text-stone-500 dark:text-stone-400 hidden sm:inline">
-                  (Frame {selectedSlotIndex + 1}/{layout.slots.length})
-                </span>
-              </div>
 
-              <button
-                onClick={handleSelectNextFrame}
-                title="Next Frame"
-                className="p-1 rounded-lg hover:bg-stone-100 dark:hover:bg-stone-700 text-stone-600 dark:text-stone-300 cursor-pointer"
-              >
-                <ChevronRight className="w-4 h-4" />
-              </button>
+                <button
+                  onClick={handleSelectNextFrame}
+                  title="Next Frame"
+                  className="p-1 rounded-lg hover:bg-stone-100 dark:hover:bg-stone-700 text-stone-600 dark:text-stone-300 cursor-pointer"
+                >
+                  <ChevronRight className="w-4 h-4" />
+                </button>
+              </div>
             </div>
 
             {/* Inline Photo Slot Swapper for layouts with fewer cuts than captured photos */}
@@ -863,9 +983,10 @@ export const EditorScreen: React.FC = () => {
         {/* Right Column: Clean Studio Controls - Stable height on desktop */}
         <div className="w-full min-w-0 md:col-span-5 bg-white dark:bg-stone-900 rounded-2xl border border-stone-200 dark:border-stone-800 p-5 flex flex-col min-h-[580px] md:h-[640px]">
           {/* Tab Selector - Fixed at top of right panel */}
-          <div className="grid grid-cols-4 gap-1 p-1 bg-stone-100 dark:bg-stone-800 rounded-xl flex-shrink-0 mb-4">
+          <div className="grid grid-cols-5 gap-1 p-1 bg-stone-100 dark:bg-stone-800 rounded-xl flex-shrink-0 mb-4">
             {[
               { id: 'filter', label: 'Filters', icon: Sliders },
+              { id: 'adjust', label: 'Adjust', icon: Sun },
               { id: 'zoom', label: 'Zoom', icon: ZoomIn },
               { id: 'date', label: 'Stamp', icon: Calendar },
               { id: 'stickers', label: 'Stickers', icon: Smile },
@@ -929,6 +1050,66 @@ export const EditorScreen: React.FC = () => {
                       </div>
                       {isCurrent && <Check className="w-3.5 h-3.5 text-kiwali-coral" />}
                     </button>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
+          {/* TAB 2: ADJUSTMENTS */}
+          {activeTab === 'adjust' && (
+            <div className="space-y-4">
+              <div className="flex items-center justify-between text-xs">
+                <span className="font-fredoka font-semibold text-theme-primary">Fine Adjustments</span>
+                <div className="flex items-center gap-3">
+                  <label className="flex items-center gap-1.5 text-stone-500 dark:text-stone-400 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={applyAllAdjustments}
+                      onChange={(e) => setApplyAllAdjustments(e.target.checked)}
+                      className="rounded border-stone-300 text-theme-primary focus:ring-theme-primary"
+                    />
+                    <span>All frames</span>
+                  </label>
+                  <button
+                    onClick={handleResetAdjustments}
+                    title="Reset Adjustments"
+                    className="inline-flex items-center gap-1 text-[11px] text-stone-400 hover:text-stone-700 dark:hover:text-stone-200 cursor-pointer"
+                  >
+                    <RotateCcw className="w-3 h-3" />
+                    <span>Reset</span>
+                  </button>
+                </div>
+              </div>
+
+              <div className="space-y-3 pt-1">
+                {[
+                  { key: 'brightness', label: 'Brightness', icon: '☀️', min: -100, max: 100 },
+                  { key: 'contrast', label: 'Contrast', icon: '🌗', min: -100, max: 100 },
+                  { key: 'saturation', label: 'Saturation', icon: '🎨', min: -100, max: 100 },
+                  { key: 'warmth', label: 'Warmth', icon: '🌡️', min: -100, max: 100 },
+                ].map(ctrl => {
+                  const val = currentAdjustments[ctrl.key as keyof PhotoAdjustments] ?? 0;
+                  return (
+                    <div key={ctrl.key} className="space-y-1 bg-stone-50 dark:bg-stone-800/50 p-2.5 rounded-xl border border-stone-100 dark:border-stone-800">
+                      <div className="flex items-center justify-between text-xs">
+                        <span className="flex items-center gap-1.5 text-stone-700 dark:text-stone-300 font-medium">
+                          <span>{ctrl.icon}</span>
+                          <span>{ctrl.label}</span>
+                        </span>
+                        <span className="font-fredoka text-[11px] text-stone-500 font-semibold w-10 text-right">
+                          {val > 0 ? `+${val}` : val}%
+                        </span>
+                      </div>
+                      <input
+                        type="range"
+                        min={ctrl.min}
+                        max={ctrl.max}
+                        value={val}
+                        onChange={(e) => handleAdjustmentChange(ctrl.key as keyof PhotoAdjustments, parseInt(e.target.value, 10))}
+                        className="w-full h-1.5 bg-stone-200 dark:bg-stone-700 rounded-lg appearance-none cursor-pointer accent-theme-primary"
+                      />
+                    </div>
                   );
                 })}
               </div>

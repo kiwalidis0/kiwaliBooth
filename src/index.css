@@ -132,3 +132,9 @@ html.dark ::-webkit-scrollbar-thumb {
 .camera-flash {
   animation: flashAnimation 0.4s ease-out forwards;
 }
+
+/* Rotate-device prompt icon spin */
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}

@@ -14,6 +14,7 @@ import {
   Camera,
   Timer,
   ImagePlus,
+  AlertTriangle,
 } from 'lucide-react';
 import { useBooth } from '../context/useBooth';
 import { LAYOUTS } from '../data/layouts';
@@ -105,7 +106,7 @@ export const CaptureScreen: React.FC = () => {
 
   // --- P0 additions ---
   const [showGrid, setShowGrid] = useState<boolean>(false);
-  const [countdownDuration, setCountdownDuration] = useState<3 | 5 | 10 | 0>(3);
+  const [countdownDuration, setCountdownDuration] = useState<3 | 5 | 10 | 0>(0);
   const [settingsOpen, setSettingsOpen] = useState<boolean>(false);
   const [timerPickerOpen, setTimerPickerOpen] = useState<boolean>(false);
   const timerPickerRef = useRef<HTMLDivElement>(null);
@@ -127,12 +128,30 @@ export const CaptureScreen: React.FC = () => {
     }
   }, [isPhysicalLandscape, setCaptureOrientation]);
 
-  // Keep video track attached to the video element if mobile landscape view mounts
-  useEffect(() => {
-    if (videoRef.current && streamRef.current && videoRef.current.srcObject !== streamRef.current) {
-      videoRef.current.srcObject = streamRef.current;
+  // Robust stream attachment to video element (ensures playback resumes after any DOM remount / orientation shift)
+  const attachStreamToVideo = useCallback((videoNode: HTMLVideoElement | null, stream: MediaStream | null) => {
+    if (!videoNode || !stream) return;
+    if (videoNode.srcObject !== stream) {
+      videoNode.srcObject = stream;
     }
-  }, [isMobileLandscape]);
+    videoNode.play().catch(err => {
+      console.warn('Video auto-playback caught (non-fatal):', err);
+    });
+  }, []);
+
+  const setVideoRef = useCallback((node: HTMLVideoElement | null) => {
+    (videoRef as React.MutableRefObject<HTMLVideoElement | null>).current = node;
+    if (node && streamRef.current) {
+      attachStreamToVideo(node, streamRef.current);
+    }
+  }, [attachStreamToVideo]);
+
+  // Ensure video element receives stream and plays on orientation transitions
+  useEffect(() => {
+    if (videoRef.current && streamRef.current) {
+      attachStreamToVideo(videoRef.current, streamRef.current);
+    }
+  }, [isLandscape, isMobileLandscape, attachStreamToVideo]);
 
   // --- Low-light detection + capture brightening ---
   // Dismissal is session-only — banner may reappear on next visit if still dark.
@@ -205,7 +224,7 @@ export const CaptureScreen: React.FC = () => {
 
         streamRef.current = stream;
         if (videoRef.current) {
-          videoRef.current.srcObject = stream;
+          attachStreamToVideo(videoRef.current, stream);
         }
         setHasCameraAccess(true);
         setErrorMessage(null);
@@ -227,9 +246,17 @@ export const CaptureScreen: React.FC = () => {
           const videoDevices = allDevices.filter(d => d.kind === 'videoinput');
           setDevices(videoDevices);
           if (videoDevices.length > 0 && !selectedDeviceId) {
-            const savedId = localStorage.getItem('kb_lastDeviceId');
-            const match = savedId ? videoDevices.find(d => d.deviceId === savedId) : null;
-            setSelectedDeviceId(match ? savedId! : videoDevices[0].deviceId);
+            // Find device corresponding to active camera facing mode
+            const match = videoDevices.find(d => {
+              const label = d.label.toLowerCase();
+              if (cameraFacingMode === 'user') {
+                return label.includes('front') || label.includes('user') || label.includes('facetime');
+              } else {
+                return label.includes('back') || label.includes('rear') || label.includes('environment');
+              }
+            });
+            const chosenId = match ? match.deviceId : videoDevices[0].deviceId;
+            setSelectedDeviceId(chosenId);
           }
         }
       } catch (err: unknown) {
@@ -254,7 +281,7 @@ export const CaptureScreen: React.FC = () => {
       }
       releaseWakeLock();
     };
-  }, [selectedDeviceId, cameraFacingMode, retryTrigger]);
+  }, [selectedDeviceId, cameraFacingMode, retryTrigger, attachStreamToVideo, releaseWakeLock]);
 
   useGSAP(
     () => {
@@ -303,7 +330,6 @@ export const CaptureScreen: React.FC = () => {
       ctx.scale(-1, 1);
     }
     // Software brightening — actually lands in the saved file.
-    // (The old CSS video filter only changed the preview, not drawImage output.)
     if (boostEnabled) {
       ctx.filter = 'brightness(1.22) contrast(1.05)';
     }
@@ -313,18 +339,34 @@ export const CaptureScreen: React.FC = () => {
     return canvas.toDataURL('image/jpeg', 0.95);
   }, [isMirrored, boostEnabled, isLandscape]);
 
-  const recordSlotPhoto = useCallback((dataUrl: string, slotIdx: number) => {
+  /**
+   * Synchronized deliberate camera flash sequence:
+   * 1. Shutter sound plays & white flash begins
+   * 2. Peak illumination holds briefly (~70ms) while frame is sampled from camera sensor
+   * 3. Photo is recorded into application state
+   * 4. Flash smoothly fades out
+   */
+  const executeSynchronizedCapture = useCallback(async (targetSlot: number): Promise<string> => {
     playShutterSound();
     setShowFlash(true);
-    setTimeout(() => setShowFlash(false), 200);
 
-    setCaptureBadge(`Shot ${slotIdx + 1} captured`);
-    setTimeout(() => setCaptureBadge(null), 1200);
+    // Peak illumination delay
+    await new Promise(r => setTimeout(r, 70));
+
+    let dataUrl: string | null = null;
+    if (hasCameraAccess) {
+      dataUrl = captureFrame();
+    }
+    if (!dataUrl) {
+      dataUrl = MOCK_SELFIE_LIST[targetSlot % MOCK_SELFIE_LIST.length];
+    }
+
+    const finalUrl = dataUrl || MOCK_SELFIE_LIST[targetSlot % MOCK_SELFIE_LIST.length];
 
     const newPhoto: CapturedPhoto = {
-      id: `photo-${Date.now()}-${slotIdx}`,
-      slotIndex: slotIdx,
-      dataUrl,
+      id: `photo-${Date.now()}-${targetSlot}`,
+      slotIndex: targetSlot,
+      dataUrl: finalUrl,
       filter: 'normal',
       x: 0,
       y: 0,
@@ -335,21 +377,21 @@ export const CaptureScreen: React.FC = () => {
     };
 
     setPhotos(prev => {
-      const existing = prev.filter(p => p.slotIndex !== slotIdx);
+      const existing = prev.filter(p => p.slotIndex !== targetSlot);
       return [...existing, newPhoto].sort((a, b) => a.slotIndex - b.slotIndex);
     });
-  }, [setPhotos]);
 
-  const handleManualSnap = useCallback(() => {
-    let dataUrl: string | null = null;
-    if (hasCameraAccess) {
-      dataUrl = captureFrame();
-    }
-    if (!dataUrl) {
-      dataUrl = MOCK_SELFIE_LIST[currentSlotTarget % MOCK_SELFIE_LIST.length];
-    }
+    setCaptureBadge(`Shot ${targetSlot + 1} captured`);
+    setTimeout(() => setCaptureBadge(null), 1200);
 
-    recordSlotPhoto(dataUrl, currentSlotTarget);
+    // Smooth flash fadeout
+    setTimeout(() => setShowFlash(false), 240);
+
+    return finalUrl;
+  }, [hasCameraAccess, captureFrame, setPhotos]);
+
+  const handleManualSnap = useCallback(async () => {
+    await executeSynchronizedCapture(currentSlotTarget);
 
     if (retakeIndex !== null) {
       setRetakeIndex(null);
@@ -357,12 +399,12 @@ export const CaptureScreen: React.FC = () => {
     } else {
       const nextSlot = currentSlotTarget + 1;
       if (nextSlot >= shotsCount) {
-        setTimeout(() => setStep('review'), 600);
+        setTimeout(() => setStep('review'), 550);
       } else {
         setCurrentSlotTarget(nextSlot);
       }
     }
-  }, [hasCameraAccess, captureFrame, currentSlotTarget, recordSlotPhoto, retakeIndex, setRetakeIndex, setStep, shotsCount]);
+  }, [currentSlotTarget, executeSynchronizedCapture, retakeIndex, setRetakeIndex, setStep, shotsCount]);
 
   const handleShutterClick = useCallback(() => {
     if (isCapturing) return;
@@ -440,10 +482,7 @@ export const CaptureScreen: React.FC = () => {
         checkLowLightNow();
       }
 
-      let dataUrl: string | null = hasCameraAccess ? captureFrame() : null;
-      if (!dataUrl) dataUrl = MOCK_SELFIE_LIST[currentTarget % MOCK_SELFIE_LIST.length];
-
-      recordSlotPhoto(dataUrl, currentTarget);
+      await executeSynchronizedCapture(currentTarget);
 
       if (retakeIndex !== null) {
         setIsCapturing(false);
@@ -492,7 +531,7 @@ export const CaptureScreen: React.FC = () => {
     };
 
     runSingleShotCountdown();
-  }, [isCapturing, retakeIndex, shotsCount, countdownDuration, hasCameraAccess, captureFrame, recordSlotPhoto, checkLowLightNow, acquireWakeLock, releaseWakeLock, setRetakeIndex, setStep]);
+  }, [isCapturing, retakeIndex, shotsCount, countdownDuration, hasCameraAccess, executeSynchronizedCapture, checkLowLightNow, acquireWakeLock, releaseWakeLock, setRetakeIndex, setStep]);
 
   // Close timer picker when clicking outside
   useEffect(() => {
@@ -558,7 +597,23 @@ export const CaptureScreen: React.FC = () => {
       }
 
       if (retakeIndex !== null) {
-        recordSlotPhoto(results[0].dataUrl, retakeIndex);
+        const first = results[0];
+        const newPhoto: CapturedPhoto = {
+          id: `photo-upload-${Date.now()}-${retakeIndex}`,
+          slotIndex: retakeIndex,
+          dataUrl: first.dataUrl,
+          filter: 'normal',
+          x: 0,
+          y: 0,
+          scale: 1,
+          rotation: 0,
+          originalWidth: first.width,
+          originalHeight: first.height,
+        };
+        setPhotos(prev => {
+          const filtered = prev.filter(p => p.slotIndex !== retakeIndex);
+          return [...filtered, newPhoto].sort((a, b) => a.slotIndex - b.slotIndex);
+        });
         setRetakeIndex(null);
         setTimeout(() => setStep('review'), 400);
         return;
@@ -618,7 +673,23 @@ export const CaptureScreen: React.FC = () => {
   const handleToggleFlipCamera = () => {
     const nextMode = cameraFacingMode === 'user' ? 'environment' : 'user';
     setCameraFacingMode(nextMode);
-    setSelectedDeviceId('');
+
+    // Stop current track cleanly before switching
+    if (streamRef.current) {
+      streamRef.current.getTracks().forEach(t => t.stop());
+    }
+
+    // Match candidate device for the target mode if available
+    const match = devices.find(d => {
+      const label = d.label.toLowerCase();
+      if (nextMode === 'user') {
+        return label.includes('front') || label.includes('user') || label.includes('facetime');
+      } else {
+        return label.includes('back') || label.includes('rear') || label.includes('environment');
+      }
+    });
+
+    setSelectedDeviceId(match ? match.deviceId : '');
     setIsMirrored(nextMode === 'user');
     setTorchOn(false);
     setRetryTrigger(prev => prev + 1);
@@ -662,8 +733,9 @@ export const CaptureScreen: React.FC = () => {
           </div>
         )}
         {uploadWarnings.length > 0 && (
-          <div className="fixed top-3 left-1/2 -translate-x-1/2 z-50 px-3.5 py-1.5 bg-amber-600/90 text-white text-xs font-medium rounded-full shadow-lg backdrop-blur-md pointer-events-none animate-in fade-in duration-200">
-            ⚠️ {uploadWarnings[0]}
+          <div className="fixed top-3 left-1/2 -translate-x-1/2 z-50 px-3.5 py-1.5 bg-amber-600/90 text-white text-xs font-medium rounded-full shadow-lg backdrop-blur-md pointer-events-none animate-in fade-in duration-200 flex items-center gap-1.5">
+            <AlertTriangle className="w-3.5 h-3.5 text-amber-200 shrink-0" />
+            <span>{uploadWarnings[0]}</span>
           </div>
         )}
 
@@ -799,7 +871,7 @@ export const CaptureScreen: React.FC = () => {
               }`}
             >
               <video
-                ref={videoRef}
+                ref={setVideoRef}
                 autoPlay
                 playsInline
                 muted
@@ -998,9 +1070,9 @@ export const CaptureScreen: React.FC = () => {
               )}
             </div>
 
-            {/* Shutter Button — right thumb sweet spot */}
+            {/* Shutter Button — right thumb sweet spot with in-button countdown */}
             <div className="my-auto scale-90 sm:scale-100 flex items-center justify-center">
-              <SnapCircle onSnap={handleShutterClick} disabled={isCapturing} />
+              <SnapCircle onSnap={handleShutterClick} disabled={isCapturing} countdown={countdown} />
             </div>
 
             {/* Bottom: Quick Switch Camera */}
@@ -1106,81 +1178,90 @@ export const CaptureScreen: React.FC = () => {
             {uploadWarnings.map((w, i) => (
               <div
                 key={i}
-                className="p-2 text-xs bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800 text-amber-800 dark:text-amber-300 rounded-xl"
+                className="p-2 text-xs bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800 text-amber-800 dark:text-amber-300 rounded-xl flex items-center gap-1.5"
               >
-                ⚠️ {w}
+                <AlertTriangle className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400 shrink-0" />
+                <span>{w}</span>
               </div>
             ))}
           </div>
         )}
 
-        {/* Low-light advisory — flat solid colors, sits above the viewfinder */}
+        {/* Low-light advisory banner — positioned outside the camera container */}
         {isLowLight && !lowLightDismissed && hasCameraAccess && !isCapturing && (
           <div
             role="status"
-            className="w-full mb-2.5 rounded-xl border border-amber-300 dark:border-stone-700 bg-amber-50 dark:bg-stone-900 shadow-sm overflow-hidden"
+            className="w-full mb-3 rounded-2xl border border-amber-300 dark:border-amber-500/40 bg-amber-50/95 dark:bg-stone-900/95 text-stone-900 dark:text-white shadow-md backdrop-blur-md overflow-hidden transition-all duration-200 flex animate-in fade-in slide-in-from-top-2"
           >
-            <div className="flex items-center gap-2.5 p-2.5">
-              <span className="shrink-0 w-8 h-8 rounded-full bg-amber-100 dark:bg-amber-950 border border-amber-300 dark:border-amber-800 flex items-center justify-center">
-                <MoonStar className="w-4 h-4 text-amber-700 dark:text-amber-400" />
+            {/* Left side: Content aesthetics */}
+            <div className="flex-1 flex items-start sm:items-center gap-2.5 p-3 pr-2">
+              <span className="shrink-0 w-8 h-8 rounded-xl bg-amber-500/20 border border-amber-400/40 flex items-center justify-center shadow-xs">
+                <MoonStar className="w-4 h-4 text-amber-500 dark:text-amber-300" />
               </span>
               <div className="flex-1 min-w-0">
-                <p className="font-fredoka font-semibold text-xs leading-tight text-stone-900 dark:text-white">
+                <p className="font-fredoka font-semibold text-xs text-stone-900 dark:text-white leading-tight">
                   Low light detected
                 </p>
-                <p className="text-[11px] leading-snug text-stone-600 dark:text-stone-400 font-sans">
-                  Move to brighter light or max screen brightness — it doubles as fill light.
+                <p className="text-[10px] leading-snug text-stone-600 dark:text-stone-300 font-sans mt-0.5">
+                  Move to brighter light or screen brightness doubles as fill.
                 </p>
               </div>
-              <div className="shrink-0 flex items-center gap-1.5">
-                {hasTorch && (
-                  <button
-                    onClick={handleToggleTorch}
-                    aria-pressed={torchOn}
-                    className={[
-                      'inline-flex items-center gap-1 px-2 py-1 rounded-full border text-[10px] font-semibold transition-all cursor-pointer',
-                      torchOn
-                        ? 'bg-theme-primary text-white border-theme-primary shadow-sm'
-                        : 'bg-white dark:bg-stone-800 text-stone-600 dark:text-stone-300 border-stone-300 dark:border-stone-600 hover:border-theme-primary',
-                    ].join(' ')}
-                  >
-                    <Flashlight className="w-3 h-3" />
-                    {torchOn ? 'Torch on' : 'Torch'}
-                  </button>
-                )}
+            </div>
+
+            {/* Right side: Actions */}
+            <div className="w-[105px] shrink-0 flex flex-col border-l border-amber-200 dark:border-white/15">
+              {hasTorch && (
                 <button
-                  onClick={handleDismissLowLight}
-                  className="px-2 py-1 rounded-full text-[10px] font-semibold text-stone-500 dark:text-stone-400 hover:text-stone-800 dark:hover:text-stone-200 hover:bg-black/5 dark:hover:bg-white/10 transition-colors cursor-pointer"
-                >
-                  Dismiss
-                </button>
-                <button
-                  onClick={handleToggleBoost}
-                  role="switch"
-                  aria-checked={boostEnabled}
+                  type="button"
+                  onClick={handleToggleTorch}
+                  aria-pressed={torchOn}
                   className={[
-                    'inline-flex items-center gap-1.5 pl-1 pr-2 py-1 rounded-full border text-[10px] font-semibold transition-all cursor-pointer select-none',
-                    boostEnabled
-                      ? 'bg-theme-primary text-white border-theme-primary shadow-sm'
-                      : 'bg-white dark:bg-stone-800 text-stone-600 dark:text-stone-300 border-stone-300 dark:border-stone-600 hover:border-theme-primary',
+                    'flex-1 flex items-center justify-center gap-1 px-2 py-1.5 border-b border-amber-200 dark:border-white/15 text-[11px] font-semibold transition-all cursor-pointer select-none active:scale-95',
+                    torchOn
+                      ? 'bg-theme-primary text-white shadow-inner'
+                      : 'text-stone-700 dark:text-white/80 hover:bg-black/5 dark:hover:bg-white/10',
+                  ].join(' ')}
+                >
+                  <Flashlight className="w-3 h-3" />
+                  <span>{torchOn ? 'Torch on' : 'Torch'}</span>
+                </button>
+              )}
+
+              <button
+                type="button"
+                onClick={handleToggleBoost}
+                role="switch"
+                aria-checked={boostEnabled}
+                className={[
+                  'flex-1 flex items-center justify-center gap-1.5 px-2 py-1.5 border-b border-amber-200 dark:border-white/15 text-[11px] font-semibold transition-all cursor-pointer select-none active:scale-95',
+                  boostEnabled
+                    ? 'bg-theme-primary text-white shadow-inner'
+                    : 'text-stone-700 dark:text-white/80 hover:bg-black/5 dark:hover:bg-white/10',
+                ].join(' ')}
+              >
+                <span
+                  className={[
+                    'relative w-5 h-3 rounded-full transition-colors shrink-0',
+                    boostEnabled ? 'bg-white/40' : 'bg-stone-300 dark:bg-white/20',
                   ].join(' ')}
                 >
                   <span
                     className={[
-                      'relative w-6 h-3.5 rounded-full transition-colors',
-                      boostEnabled ? 'bg-white/40' : 'bg-stone-300 dark:bg-stone-600',
+                      'absolute top-0.5 w-2 h-2 rounded-full bg-white shadow transition-all',
+                      boostEnabled ? 'left-2.5' : 'left-0.5',
                     ].join(' ')}
-                  >
-                    <span
-                      className={[
-                        'absolute top-0.5 w-2.5 h-2.5 rounded-full bg-white shadow transition-all',
-                        boostEnabled ? 'left-3' : 'left-0.5',
-                      ].join(' ')}
-                    />
-                  </span>
-                  Boost {boostEnabled ? 'on' : 'off'}
-                </button>
-              </div>
+                  />
+                </span>
+                <span>Boost {boostEnabled ? 'on' : 'off'}</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={handleDismissLowLight}
+                className="flex-1 flex items-center justify-center px-2 py-1.5 text-[11px] font-semibold text-stone-500 dark:text-white/60 hover:text-stone-800 dark:hover:text-white hover:bg-black/5 dark:hover:bg-white/10 transition-colors cursor-pointer"
+              >
+                Dismiss
+              </button>
             </div>
           </div>
         )}
@@ -1194,7 +1275,7 @@ export const CaptureScreen: React.FC = () => {
           }`}
         >
           <video
-            ref={videoRef}
+            ref={setVideoRef}
             autoPlay
             playsInline
             muted
@@ -1337,10 +1418,9 @@ export const CaptureScreen: React.FC = () => {
             </div>
           )}
 
-          {/* In-viewfinder Snap Circle — bottom-center, above status row.
-              Shrinks on short landscape phones so the container fits the viewport. */}
+          {/* In-viewfinder Snap Circle with integrated in-button countdown */}
           <div className="absolute bottom-10 [@media(orientation:landscape)_and_(max-height:500px)]:bottom-6 left-0 right-0 flex justify-center pointer-events-auto z-20 [@media(orientation:landscape)_and_(max-height:500px)]:scale-90 origin-bottom">
-            <SnapCircle onSnap={handleShutterClick} disabled={isCapturing} />
+            <SnapCircle onSnap={handleShutterClick} disabled={isCapturing} countdown={countdown} />
           </div>
 
           {/* Center Countdown Pulse */}
@@ -1378,25 +1458,23 @@ export const CaptureScreen: React.FC = () => {
 
         {/* Unified Bottom Control Area */}
         <div className="w-full mt-3 bg-white dark:bg-stone-900 p-3 sm:p-4 rounded-2xl border border-stone-200 dark:border-stone-800 shadow-sm space-y-3">
-          {/* ROW 1: Capture — full-width Auto Countdown */}
-          <div className="space-y-1.5">
-            <p className="text-[10px] font-semibold uppercase tracking-[0.08em] text-stone-400 dark:text-stone-500 font-sans">
-              Capture
-            </p>
-            <button
-              onClick={startCountdownSequence}
-              disabled={isCapturing}
-              className={`w-full h-12 soft-btn-coral text-xs sm:text-sm flex items-center justify-center gap-2 cursor-pointer shadow-md ${
-                isCapturing ? 'opacity-50 cursor-not-allowed' : ''
-              }`}
-            >
-              <Play className="w-4 h-4 fill-white" />
-              <span className="font-medium truncate">
-                {isCapturing
-                  ? 'Capturing sequence...'
-                  : `Auto Countdown (${countdownDuration === 0 ? 'instant' : `${countdownDuration}s`})`}
-              </span>
-            </button>
+          {/* ROW 1: Capture & Timer Controls */}
+          <div className="space-y-2">
+            <div className="flex items-center justify-between">
+              <p className="text-[10px] font-semibold uppercase tracking-[0.08em] text-stone-400 dark:text-stone-500 font-sans">
+                Timer &amp; Capture Mode
+              </p>
+              {shotsCount > 1 && (
+                <button
+                  onClick={startCountdownSequence}
+                  disabled={isCapturing}
+                  className="text-xs font-fredoka font-semibold text-theme-primary hover:underline flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
+                >
+                  <Play className="w-3.5 h-3.5 fill-theme-primary" />
+                  <span>Auto-Shoot All ({shotsCount} cuts)</span>
+                </button>
+              )}
+            </div>
 
             {/* Timer delay segmented control */}
             <div className="flex items-center gap-2 rounded-xl bg-stone-100/80 dark:bg-stone-800/60 px-2.5 py-1.5">
@@ -1422,6 +1500,11 @@ export const CaptureScreen: React.FC = () => {
                 ))}
               </div>
             </div>
+            <p className="text-[10px] text-stone-400 dark:text-stone-500 text-center font-sans">
+              {countdownDuration === 0
+                ? 'Primary shutter captures immediately'
+                : `Primary shutter begins ${countdownDuration}s countdown inside the button`}
+            </p>
           </div>
 
           {/* ROW 2: Source — camera select + alternatives */}

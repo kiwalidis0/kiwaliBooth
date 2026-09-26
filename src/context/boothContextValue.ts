@@ -49,7 +49,7 @@ export interface BoothContextType {
   setDateStamp: React.Dispatch<React.SetStateAction<DateStampConfig>>;
   stickers: StickerItem[];
   setStickers: React.Dispatch<React.SetStateAction<StickerItem[]>>;
-  addSticker: (emoji: string, x?: number, y?: number) => void;
+  addSticker: (emoji: string, x?: number, y?: number, imageUrl?: string) => void;
   updateSticker: (id: string, updates: Partial<StickerItem>) => void;
   removeSticker: (id: string) => void;
   finalImage: string | null;

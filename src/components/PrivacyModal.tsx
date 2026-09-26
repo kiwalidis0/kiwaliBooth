@@ -173,11 +173,11 @@ export const PrivacyModal: React.FC<PrivacyModalProps> = ({ isOpen, onClose }) =
                   leading-snug
                 "
               >
-                100% In-Browser Memory Processing
+                100% Client-Side Processing
               </h4>
 
               <p>
-                Every photo capture, webcam stream, canvas filter, sticker, and strip export operates exclusively in your device's local browser RAM via the HTML5 Canvas API.
+                Every photo capture, webcam stream, canvas filter, sticker, and strip export runs client-side in your browser via WebRTC and the HTML5 Canvas API. No backend server processes your images.
               </p>
             </div>
           </div>
@@ -209,11 +209,11 @@ export const PrivacyModal: React.FC<PrivacyModalProps> = ({ isOpen, onClose }) =
                   leading-snug
                 "
               >
-                Zero Cloud Uploads &amp; Zero External Servers
+                Zero Cloud Uploads &amp; Zero Photo Telemetry
               </h4>
 
               <p>
-                Kiwalibooth has no backend server or cloud database. Not a single byte of your webcam capture or generated photostrip ever leaves your computer or phone.
+                Kiwalibooth has no backend server, cloud database, or analytics. Your photo bytes are never uploaded. The only network requests are Google Fonts and any optional custom overlay URL you provide yourself.
               </p>
             </div>
           </div>
@@ -245,11 +245,11 @@ export const PrivacyModal: React.FC<PrivacyModalProps> = ({ isOpen, onClose }) =
                   leading-snug
                 "
               >
-                Instant Automatic Memory Clearance
+                Local Session Recovery &amp; Easy Clearance
               </h4>
 
               <p>
-                Closing the tab or clicking "Shoot Another" immediately purges all recorded frames and canvas buffers from memory. Nothing is retained in local storage or cookies.
+                Your active session auto-saves to this device's IndexedDB for 24 hours so you can resume after a refresh. Clicking "Shoot Another" or "Discard" deletes it immediately. Theme, camera, and app preferences stay in localStorage. No cookies are used.
               </p>
             </div>
           </div>
@@ -270,7 +270,7 @@ export const PrivacyModal: React.FC<PrivacyModalProps> = ({ isOpen, onClose }) =
             <strong className="font-semibold text-black dark:text-stone-200">
               Technical Note:
             </strong>{' '}
-            Built on open-source web primitives (WebRTC, HTML5 Canvas, Konva). You can inspect browser network traffic in DevTools to confirm zero external image transmissions.
+            Built on open-source web primitives (WebRTC, HTML5 Canvas, Konva). Check DevTools Application tab for the local `kiwalibooth_db` session store and Network tab to confirm no photo uploads.
           </div>
         </main>
 
@@ -286,7 +286,7 @@ export const PrivacyModal: React.FC<PrivacyModalProps> = ({ isOpen, onClose }) =
           <button
             onClick={onClose}
             className="
-              soft-btn-primary
+              soft-btn-coral
               text-xs
               py-2 px-5
               rounded-lg

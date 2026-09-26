@@ -125,12 +125,13 @@ html.dark ::-webkit-scrollbar-thumb {
 
 /* Flash screen animation */
 @keyframes flashAnimation {
-  0% { opacity: 0.95; }
+  0% { opacity: 1; }
+  35% { opacity: 0.95; }
   100% { opacity: 0; }
 }
 
 .camera-flash {
-  animation: flashAnimation 0.4s ease-out forwards;
+  animation: flashAnimation 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
 /* Rotate-device prompt icon spin */

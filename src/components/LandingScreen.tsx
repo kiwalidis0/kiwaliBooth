@@ -281,7 +281,7 @@ export const LandingScreen: React.FC<LandingScreenProps> = ({ onOpenPrivacy }) =
           </h2>
 
           <p className="text-xs text-black dark:text-stone-300 mt-1">
-            Built completely client-side in your browser memory
+            Built client-side — photos stay on your device, never uploaded
           </p>
         </div>
 
@@ -294,11 +294,11 @@ export const LandingScreen: React.FC<LandingScreenProps> = ({ onOpenPrivacy }) =
               </div>
 
               <h3 className="font-fredoka font-semibold text-base text-black dark:text-white mb-1">
-                100% In-Browser Memory
+                Private by Design, Saved Locally
               </h3>
 
               <p className="text-xs text-black dark:text-stone-300 leading-relaxed font-sans">
-                Zero cloud uploads, zero external databases. All webcam frames and canvas exports live only in temporary device memory.
+                Zero cloud uploads. Captures auto-save to your browser's local IndexedDB for 24h resume, preferences to localStorage.
               </p>
             </div>
 

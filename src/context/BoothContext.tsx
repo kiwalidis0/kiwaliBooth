@@ -20,6 +20,7 @@ import { LAYOUTS } from '../data/layouts';
 import { TEMPLATES, DEFAULT_CUSTOM_THEME } from '../data/templates';
 import { setSoundMuted } from '../utils/audio';
 import { saveSessionToDb, loadSessionFromDb, clearSessionFromDb } from '../utils/sessionStorageDb';
+import { getFormattedDate } from '../utils/date';
 import { BoothContext } from './boothContextValue';
 
 const THEME_PALETTES: Record<
@@ -75,14 +76,6 @@ const THEME_PALETTES: Record<
     softRgb: '254 243 199',
   },
 };
-
-function getFormattedDate(format: 'YYYY.MM.DD' | 'DD.MM.YYYY' = 'YYYY.MM.DD'): string {
-  const d = new Date();
-  const year = d.getFullYear();
-  const month = String(d.getMonth() + 1).padStart(2, '0');
-  const day = String(d.getDate()).padStart(2, '0');
-  return format === 'YYYY.MM.DD' ? `${year}.${month}.${day}` : `${day}.${month}.${year}`;
-}
 
 export const BoothProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [step, setStep] = useState<BoothStep>('landing');
@@ -199,11 +192,17 @@ export const BoothProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 
   const [dateStamp, setDateStamp] = useState<DateStampConfig>({
     enabled: true,
+    stampEnabled: false,
+    dateEnabled: true,
+    stampText: '',
+    dateText: getFormattedDate('YYYY.MM.DD'),
     font: 'Fredoka',
     color: '#111116',
     format: 'YYYY.MM.DD',
-    customText: getFormattedDate('YYYY.MM.DD'),
+    customText: '',
     fontSize: 20,
+    stampFontSize: 22,
+    dateFontSize: 13,
   });
 
   const [stickers, setStickers] = useState<StickerItem[]>([]);
@@ -356,11 +355,12 @@ export const BoothProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     setPhotos(prev => prev.map(p => ({ ...p, filter })));
   };
 
-  const addSticker = (emoji: string, x?: number, y?: number) => {
+  const addSticker = (emoji: string, x?: number, y?: number, imageUrl?: string) => {
     const layout = LAYOUTS[selectedLayoutId];
     const newSticker: StickerItem = {
       id: `sticker-${Date.now()}-${Math.random().toString(36).substr(2, 4)}`,
       emoji,
+      imageUrl,
       x: x !== undefined ? x : layout.width / 2 + (Math.random() * 80 - 40),
       y: y !== undefined ? y : layout.height / 2 + (Math.random() * 80 - 40),
       scale: 1,

@@ -28,13 +28,9 @@ function getOrientationState(): ScreenOrientationState {
   const screenType = window.screen?.orientation?.type;
   const angle = window.screen?.orientation?.angle ?? 0;
 
-  let isPortrait = true;
-  if (screenType) {
-    isPortrait = screenType.startsWith('portrait');
-  } else {
-    // Fallback to window dimensions
-    isPortrait = window.innerHeight >= window.innerWidth;
-  }
+  const isPortrait = screenType
+    ? screenType.startsWith('portrait')
+    : window.innerHeight >= window.innerWidth;
 
   const isPhysicalLandscape = !isPortrait;
   // Mobile landscape: viewport height is short (e.g. phones in landscape are 360px-430px)

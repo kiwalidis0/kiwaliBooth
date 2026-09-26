@@ -67,7 +67,17 @@ export interface SavedBoothSession {
   timestamp: number;
 }
 
-export type TemplateTheme = 'white' | 'colorblocks' | 'pastel' | 'noir' | 'custom';
+export type TemplateTheme =
+  | 'white'
+  | 'colorblocks'
+  | 'pastel'
+  | 'noir'
+  | 'polaroid'
+  | 'filmstrip'
+  | 'minimal'
+  | 'retro90'
+  | 'doodles'
+  | 'custom';
 
 export interface TemplateConfig {
   id: string;
@@ -82,21 +92,28 @@ export interface TemplateConfig {
 }
 
 export type StampFont = 'Fredoka' | 'Open Sans';
-export type StampFormat = 'YYYY.MM.DD' | 'DD.MM.YYYY' | 'custom';
+export type StampFormat = 'YYYY.MM.DD' | 'DD.MM.YYYY' | 'MM.DD.YYYY' | 'custom';
 
 export interface DateStampConfig {
   enabled: boolean;
+  stampEnabled?: boolean;
+  dateEnabled?: boolean;
+  stampText?: string;
+  dateText?: string;
   font: StampFont;
   color: string;
   format: StampFormat;
   customText: string;
   fontSize?: number;
+  stampFontSize?: number;
+  dateFontSize?: number;
 }
 
 export interface StickerItem {
   id: string;
   emoji: string;
   imageUrl?: string;
+  svgContent?: string;
   x: number;
   y: number;
   scale: number;

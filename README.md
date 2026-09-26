@@ -4,7 +4,7 @@ A privacy-first digital photobooth web application built with React, TypeScript,
 
 ## ✨ Features
 
-- **100% In-Browser Memory**: All photo captures, filters, canvas edits, and exports run entirely client-side. Zero cloud uploads and zero external database storage.
+- **Client-Side + Local-Only Storage**: All photo captures, filters, canvas edits, and exports run entirely client-side. Zero cloud uploads, zero external database storage. Active session auto-saves to IndexedDB for 24h resume, preferences to localStorage.
 - **Multiple Strip Formats**: Choose from 1-Cut Polaroid, 2-Cut Double, 3-Cut Triple, or 4-Cut Classic photostrips.
 - **Webcam & Multi-File Upload**: Capture photos with auto-countdowns or upload photos directly from your device.
 - **Studio Editor**:
@@ -57,11 +57,12 @@ A privacy-first digital photobooth web application built with React, TypeScript,
 
 ## 🔒 Privacy & Architecture
 
-Kiwalibooth is designed to be completely ephemeral:
+Kiwalibooth is private by design, saved locally only:
 - Webcam streams utilize the browser's native `MediaStream` API.
-- Photo frames are stored as in-memory data URLs.
-- Closing or refreshing the tab clears all buffers.
-- No analytics trackers or image telemetry.
+- Photo frames are processed client-side as data URLs, auto-saved to IndexedDB (`kiwalibooth_db`) for 24h session recovery with sessionStorage fallback.
+- Theme, camera, and app preferences persist in `localStorage`. No cookies.
+- "Shoot Another" / "Discard" clears the saved session immediately.
+- No analytics trackers or image telemetry. Only external requests are Google Fonts and optional custom overlay URLs you provide.
 
 ## 👤 Author
 

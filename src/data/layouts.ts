@@ -7,9 +7,9 @@ export const LAYOUTS: Record<LayoutId, LayoutConfig> = {
     subtitle: '1 Single Statement Cut',
     shotsCount: 1,
     width: 800,
-    height: 1000,
+    height: 980,
     slots: [
-      { id: 0, x: 75, y: 75, width: 650, height: 720, borderRadius: 16 },
+      { id: 0, x: 48, y: 50, width: 704, height: 704, borderRadius: 6 },
     ],
   },
   double: {

@@ -31,12 +31,19 @@ import {
   Sun,
   Undo2,
   Redo2,
+  Contrast,
+  Droplets,
+  Flame,
+  Copy,
+  GripHorizontal,
 } from 'lucide-react';
 import { useBooth } from '../context/useBooth';
 import { LAYOUTS } from '../data/layouts';
 import { STICKER_PRESETS } from '../data/templates';
 import { FILTER_LIST, applyFilterToCanvas } from '../utils/filters';
 import { generateTemplateOverlaySvg } from '../utils/templateGenerator';
+import { VECTOR_STICKERS, STICKER_CATEGORIES, type StickerCategory } from '../data/stickers';
+import { getFormattedDate } from '../utils/date';
 import type {
   FilterType,
   StampFont,
@@ -82,7 +89,7 @@ function useFilteredImage(url: string | undefined, filter: FilterType, adjustmen
     return () => {
       isMounted = false;
     };
-  }, [url, filter, adjustments?.brightness, adjustments?.contrast, adjustments?.saturation, adjustments?.warmth]);
+  }, [url, filter, adjustments]);
 
   return url ? element : null;
 }
@@ -116,6 +123,8 @@ interface SlotPhotoProps {
   photo: { dataUrl: string; filter: FilterType; adjustments?: PhotoAdjustments; x: number; y: number; scale: number };
   isSelected: boolean;
   isExporting: boolean;
+  isLocked?: boolean;
+  isDragOver?: boolean;
   onSelect: () => void;
   onUpdatePosition: (x: number, y: number) => void;
 }
@@ -125,6 +134,8 @@ const SlotPhotoItem: React.FC<SlotPhotoProps> = ({
   photo,
   isSelected,
   isExporting,
+  isLocked = false,
+  isDragOver = false,
   onSelect,
   onUpdatePosition,
 }) => {
@@ -189,7 +200,7 @@ const SlotPhotoItem: React.FC<SlotPhotoProps> = ({
           y={currentGroupY}
           width={currentWidth}
           height={currentHeight}
-          draggable
+          draggable={!isLocked}
           dragBoundFunc={(pos) => {
             const clampedAbsX = Math.min(slot.x + maxGroupX, Math.max(slot.x + minGroupX, pos.x));
             const clampedAbsY = Math.min(slot.y + maxGroupY, Math.max(slot.y + minGroupY, pos.y));
@@ -207,12 +218,26 @@ const SlotPhotoItem: React.FC<SlotPhotoProps> = ({
       )}
 
       {/* Selected slot border - STRICTLY hidden during export so it never appears on saved image */}
-      {!isExporting && isSelected && (
+      {!isExporting && isSelected && !isDragOver && (
         <Rect
           width={slot.width}
           height={slot.height}
           stroke="#FF6B81"
           strokeWidth={3}
+          cornerRadius={slot.borderRadius}
+          listening={false}
+        />
+      )}
+
+      {/* Drop Target Highlight Ring when dragging a photo over this slot */}
+      {!isExporting && isDragOver && (
+        <Rect
+          width={slot.width}
+          height={slot.height}
+          stroke="#FF6B81"
+          strokeWidth={4}
+          dash={[10, 6]}
+          fill="rgba(255, 107, 129, 0.25)"
           cornerRadius={slot.borderRadius}
           listening={false}
         />
@@ -232,7 +257,7 @@ const KonvaStickerItem: React.FC<{
   const groupRef = useRef<Konva.Group>(null);
   const trRef = useRef<Konva.Transformer>(null);
 
-  // Attach Canva-style Transformer when selected
+  // Attach touch-friendly Canva-style Transformer when selected
   useEffect(() => {
     if (isSelected && !isExporting && trRef.current && groupRef.current) {
       trRef.current.nodes([groupRef.current]);
@@ -270,14 +295,14 @@ const KonvaStickerItem: React.FC<{
         {sticker.imageUrl && customImg ? (
           <KonvaImage
             image={customImg}
-            width={80 * sticker.scale}
-            height={80 * sticker.scale}
-            offsetX={(80 * sticker.scale) / 2}
-            offsetY={(80 * sticker.scale) / 2}
+            width={90 * sticker.scale}
+            height={90 * sticker.scale}
+            offsetX={(90 * sticker.scale) / 2}
+            offsetY={(90 * sticker.scale) / 2}
           />
         ) : (
           <KonvaText
-            text={sticker.emoji}
+            text={sticker.emoji || '★'}
             fontSize={38 * sticker.scale}
             offsetX={(38 * sticker.scale) / 2}
             offsetY={(38 * sticker.scale) / 2}
@@ -287,7 +312,7 @@ const KonvaStickerItem: React.FC<{
         )}
       </Group>
 
-      {/* Canva-style interactive Transformer: corner resize + rotation stalk */}
+      {/* Enhanced touch-friendly Transformer: large 24px handles + thicker bounding guide */}
       {!isExporting && isSelected && (
         <Transformer
           ref={trRef}
@@ -296,17 +321,21 @@ const KonvaStickerItem: React.FC<{
           rotationSnaps={[0, 45, 90, 135, 180, 225, 270, 315]}
           enabledAnchors={['top-left', 'top-right', 'bottom-left', 'bottom-right']}
           boundBoxFunc={(oldBox, newBox) => {
-            if (Math.abs(newBox.width) < 15 || Math.abs(newBox.height) < 15) {
+            if (Math.abs(newBox.width) < 20 || Math.abs(newBox.height) < 20) {
               return oldBox;
             }
             return newBox;
           }}
           borderStroke="#FF6B81"
-          borderDash={[3, 3]}
+          borderStrokeWidth={2.5}
+          borderDash={[4, 4]}
           anchorStroke="#FF6B81"
+          anchorStrokeWidth={2.5}
           anchorFill="#FFFFFF"
-          anchorSize={8}
-          anchorCornerRadius={4}
+          anchorSize={24}
+          hitStrokeWidth={16}
+          anchorCornerRadius={6}
+          rotateAnchorOffset={32}
         />
       )}
     </>
@@ -324,6 +353,7 @@ interface PhotostripStageProps {
   isExporting: boolean;
   selectedSlotIndex?: number;
   selectedStickerId?: string | null;
+  hoveredSlotId?: number | null;
   onSelectSlot?: (slotId: number) => void;
   onUpdatePhotoPosition?: (photoIndex: number, x: number, y: number) => void;
   onSelectSticker?: (id: string) => void;
@@ -344,6 +374,7 @@ const PhotostripStage = React.forwardRef<Konva.Stage, PhotostripStageProps>(
       isExporting,
       selectedSlotIndex,
       selectedStickerId,
+      hoveredSlotId,
       onSelectSlot,
       onUpdatePhotoPosition,
       onSelectSticker,
@@ -358,6 +389,9 @@ const PhotostripStage = React.forwardRef<Konva.Stage, PhotostripStageProps>(
     );
     const overlaySvgImage = useSimpleImage(overlaySvgUrl);
     const customOverlayImage = useSimpleImage(customOverlayUrl);
+
+    // Safety lock: lock slot photos while any sticker is active/transforming
+    const isPhotoLocked = Boolean(selectedStickerId);
 
     return (
       <Stage
@@ -405,6 +439,8 @@ const PhotostripStage = React.forwardRef<Konva.Stage, PhotostripStageProps>(
                 photo={photo}
                 isSelected={!isExporting && selectedSlotIndex === slot.id}
                 isExporting={isExporting}
+                isLocked={isPhotoLocked}
+                isDragOver={!isExporting && hoveredSlotId === slot.id}
                 onSelect={() => onSelectSlot?.(slot.id)}
                 onUpdatePosition={(x, y) => onUpdatePhotoPosition?.(assignedPhotoIndex, x, y)}
               />
@@ -444,21 +480,92 @@ const PhotostripStage = React.forwardRef<Konva.Stage, PhotostripStageProps>(
           )}
         </Layer>
 
-        {/* LAYER 3: Elevated Date/Memory Stamp & Draggable Rotatable Stickers */}
+        {/* LAYER 3: Elevated Date & Memory Stamp (Stacked) & Draggable Rotatable Stickers */}
         <Layer>
-          {dateStamp.enabled && (
-            <KonvaText
-              x={16}
-              y={layout.height - 50 - (dateStamp.fontSize || 20)}
-              width={layout.width - 32}
-              text={dateStamp.customText}
-              fontFamily={dateStamp.font}
-              fontSize={dateStamp.fontSize || 20}
-              fontStyle="bold"
-              fill={dateStamp.color}
-              align="center"
-            />
-          )}
+          {dateStamp.enabled && (() => {
+            const hasStamp = (dateStamp.stampEnabled ?? false) && Boolean(dateStamp.stampText || dateStamp.customText);
+            const hasDate = (dateStamp.dateEnabled ?? true) && Boolean(dateStamp.dateText);
+            const stampFontSize = dateStamp.stampFontSize || dateStamp.fontSize || 22;
+            const dateFontSize = dateStamp.dateFontSize || 13;
+            const stampTextVal = (dateStamp.stampText || dateStamp.customText || '').trim();
+            const dateTextVal = (dateStamp.dateText || getFormattedDate(dateStamp.format)).trim();
+
+            if (!hasStamp && !hasDate) return null;
+
+            const lastSlot = layout.slots[layout.slots.length - 1];
+            const slotBottom = lastSlot ? lastSlot.y + lastSlot.height : layout.height - 180;
+            const chinHeight = layout.height - slotBottom;
+
+            // Stacked layout: Memory text pushed towards top of chin, Date below, app watermark at very bottom
+            if (hasStamp && hasDate) {
+              const dateY = layout.height - 68;
+              const stampY = slotBottom + Math.max(14, (chinHeight - 95 - stampFontSize) * 0.40);
+              return (
+                <Group>
+                  <KonvaText
+                    x={16}
+                    y={stampY}
+                    width={layout.width - 32}
+                    text={stampTextVal}
+                    fontFamily={dateStamp.font}
+                    fontSize={stampFontSize}
+                    fontStyle="bold"
+                    fill={dateStamp.color}
+                    align="center"
+                    letterSpacing={1.5}
+                  />
+                  <KonvaText
+                    x={16}
+                    y={dateY}
+                    width={layout.width - 32}
+                    text={dateTextVal}
+                    fontFamily="monospace"
+                    fontSize={dateFontSize}
+                    fontStyle="normal"
+                    fill={dateStamp.color}
+                    opacity={0.82}
+                    align="center"
+                    letterSpacing={2}
+                  />
+                </Group>
+              );
+            }
+
+            // Only Stamp active: pushed towards top of chin
+            if (hasStamp) {
+              const stampY = slotBottom + Math.max(16, (chinHeight - 45 - stampFontSize) * 0.45);
+              return (
+                <KonvaText
+                  x={16}
+                  y={stampY}
+                  width={layout.width - 32}
+                  text={stampTextVal}
+                  fontFamily={dateStamp.font}
+                  fontSize={stampFontSize}
+                  fontStyle="bold"
+                  fill={dateStamp.color}
+                  align="center"
+                  letterSpacing={1.5}
+                />
+              );
+            }
+
+            // Only Date active
+            return (
+              <KonvaText
+                x={16}
+                y={layout.height - 65}
+                width={layout.width - 32}
+                text={dateTextVal}
+                fontFamily="monospace"
+                fontSize={dateFontSize}
+                fontStyle="normal"
+                fill={dateStamp.color}
+                align="center"
+                letterSpacing={2}
+              />
+            );
+          })()}
 
           {stickers.map((sticker) => (
             <KonvaStickerItem
@@ -513,6 +620,7 @@ export const EditorScreen: React.FC = () => {
   const stageRef = useRef<Konva.Stage>(null);
   const offscreenStageRefs = useRef<Record<string, Konva.Stage>>({});
   const containerRef = useRef<HTMLDivElement>(null);
+  const previewViewportRef = useRef<HTMLDivElement>(null);
   const stickerFileInputRef = useRef<HTMLInputElement>(null);
 
   const [selectedSlotIndex, setSelectedSlotIndex] = useState<number>(0);
@@ -522,23 +630,33 @@ export const EditorScreen: React.FC = () => {
   const [applyAllAdjustments, setApplyAllAdjustments] = useState<boolean>(false);
   const [isExporting, setIsExporting] = useState<boolean>(false);
 
+  // Photo drag-and-drop reorder & swap state
+  const [dragState, setDragState] = useState<{
+    photoIndex: number;
+    sourceSlotIndex: number;
+    clientX: number;
+    clientY: number;
+    thumbnailUrl: string;
+  } | null>(null);
+  const [hoveredSlotId, setHoveredSlotId] = useState<number | null>(null);
+  const [stickerCategory, setStickerCategory] = useState<StickerCategory | 'All'>('All');
+  const pointerStartRef = useRef<{ x: number; y: number; photoIndex: number; sourceSlotIndex: number; thumbnailUrl: string } | null>(null);
+  const isDraggingRef = useRef<boolean>(false);
+
   // Undo / Redo history state
   interface HistorySnapshot {
     photos: CapturedPhoto[];
     stickers: StickerItem[];
     dateStamp: DateStampConfig;
   }
-  const [history, setHistory] = useState<HistorySnapshot[]>([]);
-  const [historyIndex, setHistoryIndex] = useState<number>(-1);
+  // Undo / Redo history state initialized with current photo session
+  const [history] = useState<HistorySnapshot[]>(() => {
+    return photos.length > 0 ? [{ photos, stickers, dateStamp }] : [];
+  });
+  const [historyIndex, setHistoryIndex] = useState<number>(() => {
+    return photos.length > 0 ? 0 : -1;
+  });
   const isHistoryNavigating = useRef(false);
-
-  // Initialize history snapshot
-  useEffect(() => {
-    if (history.length === 0 && photos.length > 0) {
-      setHistory([{ photos, stickers, dateStamp }]);
-      setHistoryIndex(0);
-    }
-  }, [photos, stickers, dateStamp, history.length]);
 
   const handleUndo = useCallback(() => {
     if (historyIndex > 0) {
@@ -584,26 +702,30 @@ export const EditorScreen: React.FC = () => {
   const [previewScale, setPreviewScale] = useState<number>(0.35);
 
   useEffect(() => {
-    const updateScale = () => {
-      if (containerRef.current) {
-        const isMobile = window.innerWidth < 768;
-        // On mobile (stacked layout): cap to 48% of the true viewport height
-        // On desktop (side-by-side): use the container's own rendered height
-        const availableHeight = isMobile
-          ? window.innerHeight * 0.48
-          : containerRef.current.clientHeight > 200
-            ? containerRef.current.clientHeight - 100
-            : window.innerHeight - 280;
-        const availableWidth = containerRef.current.clientWidth - 40;
-        const scaleH = availableHeight / layout.height;
-        const scaleW = availableWidth / layout.width;
+    const el = previewViewportRef.current;
+    if (!el) return;
+
+    const updateScaleFromRect = (width: number, height: number) => {
+      if (width > 20 && height > 20) {
+        const availH = height - 12;
+        const availW = width - 12;
+        const scaleH = availH / layout.height;
+        const scaleW = availW / layout.width;
         setPreviewScale(Math.min(scaleH, scaleW, 0.44));
       }
     };
 
-    updateScale();
-    window.addEventListener('resize', updateScale);
-    return () => window.removeEventListener('resize', updateScale);
+    updateScaleFromRect(el.clientWidth, el.clientHeight);
+
+    const ro = new ResizeObserver((entries) => {
+      for (const entry of entries) {
+        const { width, height } = entry.contentRect;
+        updateScaleFromRect(width, height);
+      }
+    });
+
+    ro.observe(el);
+    return () => ro.disconnect();
   }, [layout.width, layout.height]);
 
   const selectedSticker = stickers.find(s => s.id === selectedStickerId) || null;
@@ -741,6 +863,168 @@ export const EditorScreen: React.FC = () => {
     setSelectedSlotIndex(prev => (prev - 1 + layout.slots.length) % layout.slots.length);
   };
 
+  // Sticker Contextual Actions: Rotate 90° & Duplicate
+  const handleRotateSticker90 = useCallback(() => {
+    if (!selectedStickerId) return;
+    const stk = stickers.find(s => s.id === selectedStickerId);
+    if (!stk) return;
+    const newRotation = ((stk.rotation || 0) + 90) % 360;
+    updateSticker(stk.id, { rotation: newRotation });
+  }, [selectedStickerId, stickers, updateSticker]);
+
+  const handleDuplicateSticker = useCallback(() => {
+    if (!selectedStickerId) return;
+    const stk = stickers.find(s => s.id === selectedStickerId);
+    if (!stk) return;
+    const newId = `stk-dup-${Date.now()}`;
+    const duplicated: StickerItem = {
+      ...stk,
+      id: newId,
+      x: stk.x + 24,
+      y: stk.y + 24,
+    };
+    setStickers(prev => [...prev, duplicated]);
+    setSelectedStickerId(newId);
+  }, [selectedStickerId, stickers, setStickers]);
+
+  // Photo Drag-and-Drop Slot Swapping
+  const handleSwapPhotoIntoSlot = useCallback(
+    (draggedPhotoIdx: number, sourceSlotIdx: number, targetSlotIdx: number) => {
+      const currentAssignments = layoutPhotoAssignments[currentLayoutId]
+        ? [...layoutPhotoAssignments[currentLayoutId]]
+        : layout.slots.map(s => s.id);
+
+      let fromSlot = sourceSlotIdx;
+      if (fromSlot === -1) {
+        fromSlot = currentAssignments.findIndex(pIdx => pIdx === draggedPhotoIdx);
+      }
+
+      if (fromSlot !== -1 && fromSlot !== targetSlotIdx) {
+        const targetPhotoIdx = currentAssignments[targetSlotIdx] ?? targetSlotIdx;
+        assignPhotoToSlot(currentLayoutId, targetSlotIdx, draggedPhotoIdx);
+        assignPhotoToSlot(currentLayoutId, fromSlot, targetPhotoIdx);
+      } else {
+        assignPhotoToSlot(currentLayoutId, targetSlotIdx, draggedPhotoIdx);
+      }
+      setSelectedSlotIndex(targetSlotIdx);
+    },
+    [currentLayoutId, layout.slots, layoutPhotoAssignments, assignPhotoToSlot]
+  );
+
+  const handlePhotoPointerDown = useCallback(
+    (photoIndex: number, sourceSlotIndex: number, thumbnailUrl: string, e: React.PointerEvent) => {
+      if (e.button !== 0) return;
+      pointerStartRef.current = {
+        x: e.clientX,
+        y: e.clientY,
+        photoIndex,
+        sourceSlotIndex,
+        thumbnailUrl,
+      };
+      isDraggingRef.current = false;
+
+      const handlePointerMove = (moveEv: PointerEvent) => {
+        if (!pointerStartRef.current) return;
+        const dx = moveEv.clientX - pointerStartRef.current.x;
+        const dy = moveEv.clientY - pointerStartRef.current.y;
+        if (!isDraggingRef.current) {
+          if (Math.hypot(dx, dy) > 6) {
+            isDraggingRef.current = true;
+          } else {
+            return;
+          }
+        }
+
+        setDragState({
+          photoIndex: pointerStartRef.current.photoIndex,
+          sourceSlotIndex: pointerStartRef.current.sourceSlotIndex,
+          clientX: moveEv.clientX,
+          clientY: moveEv.clientY,
+          thumbnailUrl: pointerStartRef.current.thumbnailUrl,
+        });
+
+        // Detect hover over stage slots
+        if (stageRef.current) {
+          const container = stageRef.current.container();
+          if (container) {
+            const rect = container.getBoundingClientRect();
+            if (
+              moveEv.clientX >= rect.left &&
+              moveEv.clientX <= rect.right &&
+              moveEv.clientY >= rect.top &&
+              moveEv.clientY <= rect.bottom
+            ) {
+              const stageX = (moveEv.clientX - rect.left) / previewScale;
+              const stageY = (moveEv.clientY - rect.top) / previewScale;
+              const hit = layout.slots.find(
+                (s) =>
+                  stageX >= s.x &&
+                  stageX <= s.x + s.width &&
+                  stageY >= s.y &&
+                  stageY <= s.y + s.height
+              );
+              setHoveredSlotId(hit !== undefined ? hit.id : null);
+            } else {
+              setHoveredSlotId(null);
+            }
+          }
+        }
+      };
+
+      const handlePointerUp = (upEv: PointerEvent) => {
+        window.removeEventListener('pointermove', handlePointerMove);
+        window.removeEventListener('pointerup', handlePointerUp);
+
+        if (isDraggingRef.current && pointerStartRef.current) {
+          if (stageRef.current) {
+            const container = stageRef.current.container();
+            if (container) {
+              const rect = container.getBoundingClientRect();
+              if (
+                upEv.clientX >= rect.left &&
+                upEv.clientX <= rect.right &&
+                upEv.clientY >= rect.top &&
+                upEv.clientY <= rect.bottom
+              ) {
+                const stageX = (upEv.clientX - rect.left) / previewScale;
+                const stageY = (upEv.clientY - rect.top) / previewScale;
+                const hit = layout.slots.find(
+                  (s) =>
+                    stageX >= s.x &&
+                    stageX <= s.x + s.width &&
+                    stageY >= s.y &&
+                    stageY <= s.y + s.height
+                );
+                if (hit !== undefined) {
+                  handleSwapPhotoIntoSlot(
+                    pointerStartRef.current.photoIndex,
+                    pointerStartRef.current.sourceSlotIndex,
+                    hit.id
+                  );
+                }
+              }
+            }
+          }
+        }
+
+        setDragState(null);
+        setHoveredSlotId(null);
+        pointerStartRef.current = null;
+        isDraggingRef.current = false;
+      };
+
+      window.addEventListener('pointermove', handlePointerMove);
+      window.addEventListener('pointerup', handlePointerUp);
+    },
+    [previewScale, layout.slots, handleSwapPhotoIntoSlot]
+  );
+
+  const filteredVectorStickers = useMemo(() => {
+    if (stickerCategory === 'All') return VECTOR_STICKERS;
+    return VECTOR_STICKERS.filter(s => s.category === stickerCategory);
+  }, [stickerCategory]);
+
+
   return (
     <div className="py-6 px-4 max-w-5xl mx-auto pb-28 sm:pb-8">
       {/* Header */}
@@ -763,7 +1047,7 @@ export const EditorScreen: React.FC = () => {
         {/* Left Column: Photostrip Canvas Preview - Fixed stable height on desktop */}
         <div
           ref={containerRef}
-          className="w-full min-w-0 md:col-span-7 bg-stone-50 dark:bg-stone-900 border border-stone-200 dark:border-stone-800 rounded-2xl p-4 sm:p-6 flex flex-col items-center justify-between min-h-[580px] md:h-[640px] relative"
+          className="w-full min-w-0 md:col-span-7 bg-stone-50 dark:bg-stone-900 border border-stone-200 dark:border-stone-800 rounded-2xl p-4 sm:p-5 flex flex-col items-center justify-between min-h-[660px] md:h-[780px] overflow-hidden relative"
         >
           {/* Top Controls Wrapper */}
           <div className="w-full flex flex-col items-center">
@@ -860,43 +1144,122 @@ export const EditorScreen: React.FC = () => {
               </div>
             </div>
 
-            {/* Inline Photo Slot Swapper for layouts with fewer cuts than captured photos */}
-            {photos.length > layout.slots.length && (
-              <div className="w-full max-w-sm bg-white dark:bg-stone-800 px-3 py-1.5 rounded-xl border border-stone-200 dark:border-stone-700 shadow-xs mb-2 flex items-center justify-between gap-2">
-                <span className="font-fredoka text-[11px] text-black dark:text-white flex-shrink-0">
-                  Cut #{selectedSlotIndex + 1} photo:
-                </span>
-                <div className="flex gap-1.5 overflow-x-auto py-0.5">
-                  {photos.map((p, idx) => {
-                    const assignedIdx = layoutPhotoAssignments[currentLayoutId]?.[selectedSlotIndex] ?? selectedSlotIndex;
-                    const isAssigned = assignedIdx === p.slotIndex;
-                    return (
-                      <button
-                        key={p.id}
-                        onClick={() => assignPhotoToSlot(currentLayoutId, selectedSlotIndex, p.slotIndex)}
-                        className={`relative w-9 h-9 rounded-md overflow-hidden border transition-all cursor-pointer flex-shrink-0 ${
-                          isAssigned
-                            ? 'border-theme-primary ring-2 ring-theme-primary/40 scale-105 shadow-xs'
-                            : 'border-stone-200 dark:border-stone-700 opacity-60 hover:opacity-100'
-                        }`}
-                        title={`Assign Shot #${idx + 1}`}
-                      >
-                        <img src={p.dataUrl} alt={`Shot #${idx + 1}`} className="w-full h-full object-cover" />
-                        <div className={`absolute bottom-0 right-0 font-fredoka text-[8px] px-1 rounded-tl ${
-                          isAssigned ? 'bg-theme-primary text-white font-bold' : 'bg-black/60 text-white'
-                        }`}>
-                          #{idx + 1}
-                        </div>
-                      </button>
-                    );
-                  })}
+            {/* Always-Visible Photo Tray with Draggable & Click-to-Assign Thumbnails */}
+            <div className="w-full max-w-sm bg-white dark:bg-stone-800 px-3 py-2 rounded-xl border border-stone-200 dark:border-stone-700 shadow-xs mb-2">
+              <div className="flex items-center justify-between mb-1.5">
+                <div className="flex items-center gap-1.5">
+                  <GripHorizontal className="w-3.5 h-3.5 text-stone-400" />
+                  <span className="font-fredoka text-xs font-semibold text-stone-700 dark:text-stone-200">
+                    Photo Tray
+                  </span>
+                  <span className="text-[10px] text-stone-400 font-sans">
+                    ({photos.length} shots • Drag to swap or tap)
+                  </span>
                 </div>
               </div>
-            )}
+              <div className="flex gap-2 overflow-x-auto py-1 scrollbar-thin">
+                {photos.map((p, idx) => {
+                  const currentAssignments = layoutPhotoAssignments[currentLayoutId] || [];
+                  const assignedSlotId = layout.slots.findIndex(
+                    (s) => (currentAssignments[s.id] ?? s.id) === p.slotIndex
+                  );
+                  const isCurrentlyInSelectedSlot = assignedPhotoIndex === p.slotIndex;
+
+                  return (
+                    <div
+                      key={p.id}
+                      onPointerDown={(e) =>
+                        handlePhotoPointerDown(
+                          p.slotIndex,
+                          assignedSlotId,
+                          p.dataUrl,
+                          e
+                        )
+                      }
+                      onClick={() => {
+                        handleSwapPhotoIntoSlot(p.slotIndex, assignedSlotId, selectedSlotIndex);
+                      }}
+                      className={`group relative w-11 h-11 sm:w-12 sm:h-12 rounded-lg overflow-hidden border-2 transition-all cursor-grab active:cursor-grabbing flex-shrink-0 select-none touch-none ${
+                        isCurrentlyInSelectedSlot
+                          ? 'border-theme-primary ring-2 ring-theme-primary/30 shadow-sm scale-105'
+                          : 'border-stone-200 dark:border-stone-700 opacity-80 hover:opacity-100'
+                      }`}
+                      title={`Shot #${idx + 1} - Drag onto a frame or click to assign`}
+                    >
+                      <img
+                        src={p.dataUrl}
+                        alt={`Shot #${idx + 1}`}
+                        className="w-full h-full object-cover pointer-events-none"
+                        draggable={false}
+                      />
+                      <div className="absolute top-0 left-0 bg-black/60 text-white font-fredoka text-[8px] px-1 rounded-br">
+                        #{idx + 1}
+                      </div>
+                      {assignedSlotId !== -1 && (
+                        <div className="absolute bottom-0 right-0 bg-theme-primary text-white font-fredoka text-[8px] px-1 rounded-tl font-bold">
+                          #{assignedSlotId + 1}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
           </div>
 
-          {/* Konva Stage Container — touch-action:none prevents scroll conflict on mobile */}
-          <div className="relative flex items-center justify-center my-auto" style={{ touchAction: 'none' }}>
+          {/* Konva Stage Container — flex-1 min-h-0 guarantees strip stays fully contained within wrapper */}
+          <div
+            ref={previewViewportRef}
+            className="flex-1 min-h-0 w-full flex items-center justify-center my-1 relative overflow-hidden"
+            style={{ touchAction: 'none' }}
+          >
+            {/* Floating Contextual Sticker Toolbar (Rotate 90°, Copy, Delete) */}
+            {selectedSticker && !isExporting && (
+              <div
+                className="absolute z-30 flex items-center gap-1 bg-stone-900/95 text-white backdrop-blur-md px-2.5 py-1.5 rounded-full shadow-xl border border-stone-700/80 -translate-x-1/2 -translate-y-full pointer-events-auto transition-all animate-in fade-in zoom-in-95 duration-150"
+                style={{
+                  top: Math.max(16, selectedSticker.y * previewScale - 12),
+                  left: Math.min(
+                    Math.max(90, selectedSticker.x * previewScale),
+                    layout.width * previewScale - 90
+                  ),
+                }}
+              >
+                <button
+                  type="button"
+                  onClick={handleRotateSticker90}
+                  title="Rotate 90 degrees"
+                  className="p-1 hover:bg-white/20 rounded-full transition-colors flex items-center gap-1 text-[11px] cursor-pointer"
+                >
+                  <RotateCw className="w-3.5 h-3.5" />
+                  <span className="font-medium text-[10px]">90°</span>
+                </button>
+                <div className="w-[1px] h-3.5 bg-stone-700" />
+                <button
+                  type="button"
+                  onClick={handleDuplicateSticker}
+                  title="Duplicate sticker"
+                  className="p-1 hover:bg-white/20 rounded-full transition-colors flex items-center gap-1 text-[11px] cursor-pointer"
+                >
+                  <Copy className="w-3.5 h-3.5" />
+                  <span className="font-medium text-[10px]">Copy</span>
+                </button>
+                <div className="w-[1px] h-3.5 bg-stone-700" />
+                <button
+                  type="button"
+                  onClick={() => {
+                    removeSticker(selectedSticker.id);
+                    setSelectedStickerId(null);
+                  }}
+                  title="Delete sticker"
+                  className="p-1 hover:bg-red-500/30 text-red-400 hover:text-red-300 rounded-full transition-colors flex items-center gap-1 text-[11px] cursor-pointer"
+                >
+                  <Trash2 className="w-3.5 h-3.5" />
+                  <span className="font-medium text-[10px]">Delete</span>
+                </button>
+              </div>
+            )}
+
             <div
               className="rounded-xl overflow-hidden bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-700 shadow-md"
               style={{
@@ -924,7 +1287,11 @@ export const EditorScreen: React.FC = () => {
                   isExporting={isExporting}
                   selectedSlotIndex={selectedSlotIndex}
                   selectedStickerId={selectedStickerId}
-                  onSelectSlot={(id) => setSelectedSlotIndex(id)}
+                  hoveredSlotId={hoveredSlotId}
+                  onSelectSlot={(id) => {
+                    setSelectedSlotIndex(id);
+                    setSelectedStickerId(null);
+                  }}
                   onUpdatePhotoPosition={(photoIdx, x, y) => updatePhoto(photoIdx, { x, y })}
                   onSelectSticker={(id) => setSelectedStickerId(id)}
                   onUpdateSticker={(id, updates) => updateSticker(id, updates)}
@@ -981,7 +1348,7 @@ export const EditorScreen: React.FC = () => {
         </div>
 
         {/* Right Column: Clean Studio Controls - Stable height on desktop */}
-        <div className="w-full min-w-0 md:col-span-5 bg-white dark:bg-stone-900 rounded-2xl border border-stone-200 dark:border-stone-800 p-5 flex flex-col min-h-[580px] md:h-[640px]">
+        <div className="w-full min-w-0 md:col-span-5 bg-white dark:bg-stone-900 rounded-2xl border border-stone-200 dark:border-stone-800 p-5 flex flex-col min-h-[660px] md:h-[780px] overflow-hidden">
           {/* Tab Selector - Fixed at top of right panel */}
           <div className="grid grid-cols-5 gap-1 p-1 bg-stone-100 dark:bg-stone-800 rounded-xl flex-shrink-0 mb-4">
             {[
@@ -1010,8 +1377,8 @@ export const EditorScreen: React.FC = () => {
             })}
           </div>
 
-          {/* Scrollable Tool Drawer - Prevents container resizing */}
-          <div className="flex-1 overflow-y-auto pr-1 min-w-0">
+          {/* Scrollable Tool Drawer - Generous padding to prevent cutting off controls */}
+          <div className="flex-1 overflow-y-auto pr-1 pb-10 min-w-0">
             {/* TAB 1: FILTERS */}
           {activeTab === 'filter' && (
             <div className="space-y-4">
@@ -1084,17 +1451,18 @@ export const EditorScreen: React.FC = () => {
 
               <div className="space-y-3 pt-1">
                 {[
-                  { key: 'brightness', label: 'Brightness', icon: '☀️', min: -100, max: 100 },
-                  { key: 'contrast', label: 'Contrast', icon: '🌗', min: -100, max: 100 },
-                  { key: 'saturation', label: 'Saturation', icon: '🎨', min: -100, max: 100 },
-                  { key: 'warmth', label: 'Warmth', icon: '🌡️', min: -100, max: 100 },
+                  { key: 'brightness', label: 'Brightness', icon: Sun, color: 'text-amber-500', min: -100, max: 100 },
+                  { key: 'contrast', label: 'Contrast', icon: Contrast, color: 'text-indigo-500', min: -100, max: 100 },
+                  { key: 'saturation', label: 'Saturation', icon: Droplets, color: 'text-emerald-500', min: -100, max: 100 },
+                  { key: 'warmth', label: 'Warmth', icon: Flame, color: 'text-rose-500', min: -100, max: 100 },
                 ].map(ctrl => {
+                  const Icon = ctrl.icon;
                   const val = currentAdjustments[ctrl.key as keyof PhotoAdjustments] ?? 0;
                   return (
                     <div key={ctrl.key} className="space-y-1 bg-stone-50 dark:bg-stone-800/50 p-2.5 rounded-xl border border-stone-100 dark:border-stone-800">
                       <div className="flex items-center justify-between text-xs">
                         <span className="flex items-center gap-1.5 text-stone-700 dark:text-stone-300 font-medium">
-                          <span>{ctrl.icon}</span>
+                          <Icon className={`w-3.5 h-3.5 ${ctrl.color}`} />
                           <span>{ctrl.label}</span>
                         </span>
                         <span className="font-fredoka text-[11px] text-stone-500 font-semibold w-10 text-right">
@@ -1160,33 +1528,241 @@ export const EditorScreen: React.FC = () => {
             <div className="space-y-4">
               <div className="flex items-center justify-between text-xs">
                 <span className="font-fredoka font-semibold text-theme-primary">Date Stamp &amp; Memory Text</span>
-                <label className="flex items-center gap-1.5 text-stone-500 dark:text-stone-400 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={dateStamp.enabled}
-                    onChange={(e) => setDateStamp(prev => ({ ...prev, enabled: e.target.checked }))}
-                    className="rounded border-stone-300 text-kiwali-coral focus:ring-kiwali-coral"
-                  />
-                  <span>Show</span>
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <span className="text-[11px] text-stone-500 dark:text-stone-400">Show on Strip</span>
+                  <button
+                    type="button"
+                    role="switch"
+                    aria-checked={dateStamp.enabled}
+                    onClick={() => setDateStamp(prev => ({ ...prev, enabled: !prev.enabled }))}
+                    className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
+                      dateStamp.enabled ? 'bg-theme-primary' : 'bg-stone-300 dark:bg-stone-700'
+                    }`}
+                  >
+                    <span
+                      className={`pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow-md ring-0 transition duration-200 ease-in-out ${
+                        dateStamp.enabled ? 'translate-x-4' : 'translate-x-0'
+                      }`}
+                    />
+                  </button>
                 </label>
               </div>
 
               {dateStamp.enabled && (
                 <>
-                  <div>
-                    <label className="block text-[11px] text-stone-500 dark:text-stone-400 mb-1">
-                      Custom Memory Text / Date
-                    </label>
-                    <input
-                      type="text"
-                      value={dateStamp.customText}
-                      onChange={(e) => setDateStamp(prev => ({ ...prev, customText: e.target.value }))}
-                      placeholder="e.g. summer with besties • 2026.09.24"
-                      className="w-full px-3 py-2 border border-stone-200 dark:border-stone-700 dark:bg-stone-800 dark:text-white rounded-xl text-xs focus:outline-none focus:border-kiwali-coral"
-                    />
-                    <p className="text-[10px] text-stone-400 mt-1">
-                      Displays prominently on the bottom of your photostrip.
-                    </p>
+                  {/* Independent Section 1: Memory Stamp Text */}
+                  <div className="p-3 bg-stone-50 dark:bg-stone-800/60 rounded-xl border border-stone-200 dark:border-stone-700 space-y-2.5">
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-semibold text-stone-700 dark:text-stone-200 flex items-center gap-1.5">
+                        <Type className="w-3.5 h-3.5 text-theme-primary" />
+                        <span>Memory Text</span>
+                      </span>
+                      <button
+                        type="button"
+                        role="switch"
+                        aria-checked={Boolean(dateStamp.stampEnabled)}
+                        onClick={() => setDateStamp(prev => ({ ...prev, stampEnabled: !prev.stampEnabled }))}
+                        className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
+                          dateStamp.stampEnabled ? 'bg-theme-primary' : 'bg-stone-300 dark:bg-stone-700'
+                        }`}
+                      >
+                        <span
+                          className={`pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow-md ring-0 transition duration-200 ease-in-out ${
+                            dateStamp.stampEnabled ? 'translate-x-4' : 'translate-x-0'
+                          }`}
+                        />
+                      </button>
+                    </div>
+
+                    {Boolean(dateStamp.stampEnabled) && (
+                      <div className="space-y-2.5">
+                        <div className="relative">
+                          <input
+                            type="text"
+                            maxLength={32}
+                            value={dateStamp.stampText ?? dateStamp.customText ?? ''}
+                            onChange={(e) => {
+                              const val = e.target.value.slice(0, 32);
+                              setDateStamp(prev => ({ ...prev, stampText: val, customText: val }));
+                            }}
+                            placeholder="Write custom message (max 32 chars)..."
+                            className="w-full px-3 py-2 border border-stone-200 dark:border-stone-700 dark:bg-stone-800 dark:text-white rounded-xl text-xs focus:outline-none focus:border-kiwali-coral pr-14"
+                          />
+                          <span className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[10px] text-stone-400 font-mono select-none">
+                            {(dateStamp.stampText ?? dateStamp.customText ?? '').length}/32
+                          </span>
+                        </div>
+
+                        {/* Memory Stamp Independent Size Slider */}
+                        <div className="pt-1 border-t border-stone-200/60 dark:border-stone-700/60">
+                          <div className="flex items-center justify-between text-[11px] text-stone-500 dark:text-stone-400 mb-1">
+                            <span>Text Size</span>
+                            <span className="font-sans font-medium text-[10px] text-stone-400">
+                              {dateStamp.stampFontSize || 22}px
+                            </span>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <button
+                              type="button"
+                              onClick={() => setDateStamp(prev => ({ ...prev, stampFontSize: Math.max(14, (prev.stampFontSize || 22) - 2) }))}
+                              className="w-7 h-7 rounded-lg border border-stone-200 dark:border-stone-700 bg-white dark:bg-stone-900 flex items-center justify-center cursor-pointer text-stone-600 dark:text-stone-300"
+                            >
+                              <Minus className="w-3 h-3" />
+                            </button>
+                            <input
+                              type="range"
+                              min="14"
+                              max="36"
+                              step="1"
+                              value={dateStamp.stampFontSize || 22}
+                              onChange={(e) => setDateStamp(prev => ({ ...prev, stampFontSize: parseInt(e.target.value, 10) }))}
+                              className="flex-1 accent-kiwali-coral cursor-pointer"
+                            />
+                            <button
+                              type="button"
+                              onClick={() => setDateStamp(prev => ({ ...prev, stampFontSize: Math.min(36, (prev.stampFontSize || 22) + 2) }))}
+                              className="w-7 h-7 rounded-lg border border-stone-200 dark:border-stone-700 bg-white dark:bg-stone-900 flex items-center justify-center cursor-pointer text-stone-600 dark:text-stone-300"
+                            >
+                              <Plus className="w-3 h-3" />
+                            </button>
+                          </div>
+                          <div className="grid grid-cols-4 gap-1.5 mt-1.5">
+                            {[
+                              { label: 'S', size: 16 },
+                              { label: 'M', size: 22 },
+                              { label: 'L', size: 28 },
+                              { label: 'XL', size: 34 },
+                            ].map(preset => (
+                              <button
+                                key={preset.label}
+                                type="button"
+                                onClick={() => setDateStamp(prev => ({ ...prev, stampFontSize: preset.size }))}
+                                className={`py-0.5 text-[10px] rounded-md border text-center transition-all cursor-pointer ${
+                                  (dateStamp.stampFontSize || 22) === preset.size
+                                    ? 'border-kiwali-coral bg-kiwali-soft-pink/30 font-semibold text-stone-900 dark:text-white dark:bg-stone-800'
+                                    : 'border-stone-200 dark:border-stone-700 text-stone-600 dark:text-stone-400 hover:bg-stone-100'
+                                }`}
+                              >
+                                {preset.label}
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Independent Section 2: Timestamp / Date */}
+                  <div className="p-3 bg-stone-50 dark:bg-stone-800/60 rounded-xl border border-stone-200 dark:border-stone-700 space-y-2.5">
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-semibold text-stone-700 dark:text-stone-200 flex items-center gap-1.5">
+                        <Calendar className="w-3.5 h-3.5 text-theme-primary" />
+                        <span>Timestamp Date</span>
+                      </span>
+                      <button
+                        type="button"
+                        role="switch"
+                        aria-checked={Boolean(dateStamp.dateEnabled)}
+                        onClick={() => setDateStamp(prev => ({ ...prev, dateEnabled: !prev.dateEnabled }))}
+                        className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
+                          dateStamp.dateEnabled ? 'bg-theme-primary' : 'bg-stone-300 dark:bg-stone-700'
+                        }`}
+                      >
+                        <span
+                          className={`pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow-md ring-0 transition duration-200 ease-in-out ${
+                            dateStamp.dateEnabled ? 'translate-x-4' : 'translate-x-0'
+                          }`}
+                        />
+                      </button>
+                    </div>
+
+                    {Boolean(dateStamp.dateEnabled) && (
+                      <div className="space-y-2.5">
+                        <input
+                          type="text"
+                          value={dateStamp.dateText ?? getFormattedDate(dateStamp.format)}
+                          onChange={(e) => setDateStamp(prev => ({ ...prev, dateText: e.target.value }))}
+                          placeholder="2026.09.26"
+                          className="w-full px-3 py-2 border border-stone-200 dark:border-stone-700 dark:bg-stone-800 dark:text-white rounded-xl text-xs font-mono focus:outline-none focus:border-kiwali-coral"
+                        />
+                        {/* Date Format Presets */}
+                        <div className="grid grid-cols-3 gap-1">
+                          {(['YYYY.MM.DD', 'MM.DD.YYYY', 'DD.MM.YYYY'] as const).map((fmt) => (
+                            <button
+                              key={fmt}
+                              type="button"
+                              onClick={() => {
+                                const newFormatted = getFormattedDate(fmt);
+                                setDateStamp(prev => ({ ...prev, format: fmt, dateText: newFormatted }));
+                              }}
+                              className={`py-1 text-[10px] font-mono rounded-lg border text-center transition-colors cursor-pointer ${
+                                dateStamp.format === fmt
+                                  ? 'border-theme-primary bg-theme-soft/30 text-theme-primary font-semibold'
+                                  : 'border-stone-200 dark:border-stone-700 text-stone-600 dark:text-stone-400 hover:bg-stone-100'
+                              }`}
+                            >
+                              {fmt}
+                            </button>
+                          ))}
+                        </div>
+
+                        {/* Date Stamp Independent Size Slider */}
+                        <div className="pt-2 border-t border-stone-200/60 dark:border-stone-700/60">
+                          <div className="flex items-center justify-between text-[11px] text-stone-500 dark:text-stone-400 mb-1">
+                            <span>Date Size</span>
+                            <span className="font-sans font-medium text-[10px] text-stone-400">
+                              {dateStamp.dateFontSize || 13}px
+                            </span>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <button
+                              type="button"
+                              onClick={() => setDateStamp(prev => ({ ...prev, dateFontSize: Math.max(9, (prev.dateFontSize || 13) - 1) }))}
+                              className="w-7 h-7 rounded-lg border border-stone-200 dark:border-stone-700 bg-white dark:bg-stone-900 flex items-center justify-center cursor-pointer text-stone-600 dark:text-stone-300"
+                            >
+                              <Minus className="w-3 h-3" />
+                            </button>
+                            <input
+                              type="range"
+                              min="9"
+                              max="24"
+                              step="1"
+                              value={dateStamp.dateFontSize || 13}
+                              onChange={(e) => setDateStamp(prev => ({ ...prev, dateFontSize: parseInt(e.target.value, 10) }))}
+                              className="flex-1 accent-kiwali-coral cursor-pointer"
+                            />
+                            <button
+                              type="button"
+                              onClick={() => setDateStamp(prev => ({ ...prev, dateFontSize: Math.min(24, (prev.dateFontSize || 13) + 1) }))}
+                              className="w-7 h-7 rounded-lg border border-stone-200 dark:border-stone-700 bg-white dark:bg-stone-900 flex items-center justify-center cursor-pointer text-stone-600 dark:text-stone-300"
+                            >
+                              <Plus className="w-3 h-3" />
+                            </button>
+                          </div>
+                          <div className="grid grid-cols-4 gap-1.5 mt-1.5">
+                            {[
+                              { label: 'S', size: 10 },
+                              { label: 'M', size: 13 },
+                              { label: 'L', size: 16 },
+                              { label: 'XL', size: 20 },
+                            ].map(preset => (
+                              <button
+                                key={preset.label}
+                                type="button"
+                                onClick={() => setDateStamp(prev => ({ ...prev, dateFontSize: preset.size }))}
+                                className={`py-0.5 text-[10px] rounded-md border text-center transition-all cursor-pointer ${
+                                  (dateStamp.dateFontSize || 13) === preset.size
+                                    ? 'border-kiwali-coral bg-kiwali-soft-pink/30 font-semibold text-stone-900 dark:text-white dark:bg-stone-800'
+                                    : 'border-stone-200 dark:border-stone-700 text-stone-600 dark:text-stone-400 hover:bg-stone-100'
+                                }`}
+                              >
+                                {preset.label}
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+                    )}
                   </div>
 
                   <div>
@@ -1213,97 +1789,19 @@ export const EditorScreen: React.FC = () => {
                     </div>
                   </div>
 
-                  {/* Text Size / Resize Controls */}
-                  <div>
-                    <div className="flex items-center justify-between text-[11px] text-stone-500 dark:text-stone-400 mb-1.5">
-                      <div className="flex items-center gap-1">
-                        <Type className="w-3.5 h-3.5" />
-                        <span>Text Size</span>
-                      </div>
-                      <span className="font-sans font-medium text-[10px] text-stone-400">
-                        {dateStamp.fontSize || 20}px
-                      </span>
-                    </div>
-
-                    <div className="flex items-center gap-2">
-                      <button
-                        onClick={() =>
-                          setDateStamp(prev => ({
-                            ...prev,
-                            fontSize: Math.max(12, (prev.fontSize || 20) - 2),
-                          }))
-                        }
-                        className="w-8 h-8 rounded-xl border border-stone-200 dark:border-stone-700 bg-stone-50 dark:bg-stone-800 hover:bg-stone-100 dark:hover:bg-stone-700 flex items-center justify-center cursor-pointer text-stone-600 dark:text-stone-300"
-                        title="Decrease text size"
-                      >
-                        <Minus className="w-3.5 h-3.5" />
-                      </button>
-
-                      <input
-                        type="range"
-                        min="12"
-                        max="36"
-                        step="1"
-                        value={dateStamp.fontSize || 20}
-                        onChange={(e) =>
-                          setDateStamp(prev => ({
-                            ...prev,
-                            fontSize: parseInt(e.target.value, 10),
-                          }))
-                        }
-                        className="flex-1 accent-kiwali-coral cursor-pointer"
-                      />
-
-                      <button
-                        onClick={() =>
-                          setDateStamp(prev => ({
-                            ...prev,
-                            fontSize: Math.min(36, (prev.fontSize || 20) + 2),
-                          }))
-                        }
-                        className="w-8 h-8 rounded-xl border border-stone-200 dark:border-stone-700 bg-stone-50 dark:bg-stone-800 hover:bg-stone-100 dark:hover:bg-stone-700 flex items-center justify-center cursor-pointer text-stone-600 dark:text-stone-300"
-                        title="Increase text size"
-                      >
-                        <Plus className="w-3.5 h-3.5" />
-                      </button>
-                    </div>
-
-                    {/* Quick Size Presets */}
-                    <div className="grid grid-cols-4 gap-1.5 mt-2">
-                      {[
-                        { label: 'Small', size: 14 },
-                        { label: 'Medium', size: 20 },
-                        { label: 'Large', size: 26 },
-                        { label: 'XL', size: 32 },
-                      ].map(preset => (
-                        <button
-                          key={preset.label}
-                          onClick={() =>
-                            setDateStamp(prev => ({ ...prev, fontSize: preset.size }))
-                          }
-                          className={`py-1 text-[11px] rounded-lg border text-center transition-all cursor-pointer ${
-                            (dateStamp.fontSize || 20) === preset.size
-                              ? 'border-kiwali-coral bg-kiwali-soft-pink/30 font-semibold text-stone-900 dark:text-white dark:bg-stone-800'
-                              : 'border-stone-200 dark:border-stone-700 text-stone-600 dark:text-stone-400 hover:bg-stone-50 dark:hover:bg-stone-800'
-                          }`}
-                        >
-                          {preset.label}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-
-                  <div>
-                    <label className="block text-[11px] text-stone-500 dark:text-stone-400 mb-1">
-                      Color
+                  <div className="pb-6">
+                    <label className="block text-[11px] text-stone-500 dark:text-stone-400 mb-1.5">
+                      Typography Color
                     </label>
-                    <div className="flex items-center gap-2">
-                      {['#1C1917', '#F8FAFC', '#FF6B81', '#3B82F6', '#10B981', '#A855F7'].map(c => (
+                    <div className="flex flex-wrap items-center gap-3 p-1">
+                      {['#1C1917', '#F8FAFC', '#FF6B81', '#3B82F6', '#10B981', '#A855F7', '#D97706'].map(c => (
                         <button
                           key={c}
+                          type="button"
                           onClick={() => setDateStamp(prev => ({ ...prev, color: c }))}
-                          className={`w-6 h-6 rounded-full border border-stone-300 dark:border-stone-600 transition-transform ${
-                            dateStamp.color === c ? 'scale-125 ring-2 ring-kiwali-coral ring-offset-1' : ''
+                          aria-label={`Select color ${c}`}
+                          className={`w-7 h-7 rounded-full border border-stone-300 dark:border-stone-600 transition-all cursor-pointer shadow-xs ${
+                            dateStamp.color === c ? 'scale-110 ring-2 ring-kiwali-coral ring-offset-2 ring-offset-white dark:ring-offset-stone-900' : 'hover:scale-105'
                           }`}
                           style={{ backgroundColor: c }}
                         />
@@ -1334,6 +1832,51 @@ export const EditorScreen: React.FC = () => {
                 )}
               </div>
 
+              {/* Vector Sticker Categories */}
+              <div className="flex gap-1 overflow-x-auto pb-1 scrollbar-none">
+                {(['All', ...STICKER_CATEGORIES] as const).map((cat) => (
+                  <button
+                    key={cat}
+                    type="button"
+                    onClick={() => setStickerCategory(cat)}
+                    className={`px-2.5 py-1 rounded-lg text-xs font-medium whitespace-nowrap transition-all cursor-pointer ${
+                      stickerCategory === cat
+                        ? 'soft-btn-coral !p-1 !px-2.5 !text-white font-bold shadow-xs'
+                        : 'bg-stone-100 dark:bg-stone-800 text-stone-600 dark:text-stone-400 hover:bg-stone-200'
+                    }`}
+                  >
+                    {cat}
+                  </button>
+                ))}
+              </div>
+
+              {/* Curated Vector Stickers Grid */}
+              <div>
+                <span className="block text-[11px] text-stone-500 dark:text-stone-400 mb-1.5 font-medium">
+                  Vector Pack ({filteredVectorStickers.length})
+                </span>
+                <div className="grid grid-cols-4 gap-2 p-2 bg-stone-50 dark:bg-stone-800 rounded-xl border border-stone-200 dark:border-stone-700 max-h-52 overflow-y-auto">
+                  {filteredVectorStickers.map((stk) => (
+                    <button
+                      key={stk.id}
+                      type="button"
+                      onClick={() => addSticker('', undefined, undefined, stk.dataUrl)}
+                      className="group aspect-square rounded-xl bg-white dark:bg-stone-900 hover:bg-stone-100 dark:hover:bg-stone-800 border border-stone-200 dark:border-stone-700 p-1.5 flex flex-col items-center justify-center hover:scale-105 active:scale-95 transition-all shadow-2xs hover:shadow-xs cursor-pointer"
+                      title={`Add ${stk.name}`}
+                    >
+                      <img
+                        src={stk.dataUrl}
+                        alt={stk.name}
+                        className="w-9 h-9 object-contain pointer-events-none group-hover:scale-110 transition-transform"
+                      />
+                      <span className="text-[8px] text-stone-500 dark:text-stone-400 mt-1 truncate max-w-full font-medium">
+                        {stk.name}
+                      </span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+
               {/* Upload Custom PNG Sticker Button */}
               <div>
                 <button
@@ -1356,15 +1899,19 @@ export const EditorScreen: React.FC = () => {
                 </p>
               </div>
 
-              {/* Preset sticker icons */}
+              {/* Complete Expanded Emoji Selection */}
               <div>
-                <span className="block text-[11px] text-stone-500 dark:text-stone-400 mb-1.5">Preset Stickers</span>
-                <div className="grid grid-cols-6 gap-2 p-2.5 bg-stone-50 dark:bg-stone-800 rounded-xl border border-stone-200 dark:border-stone-700">
-                  {STICKER_PRESETS.slice(0, 12).map((emoji) => (
+                <span className="block text-[11px] text-stone-500 dark:text-stone-400 mb-1.5 font-medium">
+                  Emoji Collection ({STICKER_PRESETS.length})
+                </span>
+                <div className="grid grid-cols-6 gap-2 p-2 bg-stone-50 dark:bg-stone-800 rounded-xl border border-stone-200 dark:border-stone-700 max-h-48 overflow-y-auto">
+                  {STICKER_PRESETS.map((emoji, idx) => (
                     <button
-                      key={emoji}
+                      key={`${emoji}-${idx}`}
+                      type="button"
                       onClick={() => addSticker(emoji)}
-                      className="w-9 h-9 rounded-lg bg-white dark:bg-stone-900 hover:bg-stone-100 dark:hover:bg-stone-800 border border-stone-200 dark:border-stone-700 flex items-center justify-center text-lg active:scale-95 transition-transform cursor-pointer"
+                      className="w-9 h-9 rounded-lg bg-white dark:bg-stone-900 hover:bg-stone-100 dark:hover:bg-stone-800 border border-stone-200 dark:border-stone-700 flex items-center justify-center text-lg active:scale-95 transition-transform cursor-pointer hover:shadow-2xs"
+                      title="Add emoji sticker"
                     >
                       {emoji}
                     </button>
@@ -1519,6 +2066,29 @@ export const EditorScreen: React.FC = () => {
           <ArrowRight className="w-4 h-4" />
         </button>
       </div>
+
+      {/* Floating Drag Clone for Photo Drag-and-Drop */}
+      {dragState && (
+        <div
+          className="fixed z-50 pointer-events-none -translate-x-1/2 -translate-y-1/2 rounded-xl overflow-hidden shadow-2xl border-2 border-theme-primary bg-white rotate-3 scale-110 transition-transform"
+          style={{
+            left: dragState.clientX,
+            top: dragState.clientY,
+            width: 72,
+            height: 72,
+          }}
+        >
+          <img
+            src={dragState.thumbnailUrl}
+            alt="Dragging photo"
+            className="w-full h-full object-cover"
+          />
+          <div className="absolute inset-0 bg-theme-primary/10" />
+          <div className="absolute bottom-0 inset-x-0 bg-black/70 text-white font-fredoka text-[9px] text-center py-0.5">
+            Drop on frame
+          </div>
+        </div>
+      )}
     </div>
   );
 };

@@ -116,7 +116,7 @@ export const QRShareModal: React.FC<QRShareModalProps> = ({
 
         {/* Privacy badge */}
         <div className="text-[11px] text-stone-500 dark:text-stone-400 bg-stone-100 dark:bg-stone-800/60 px-3 py-1 rounded-full mb-4 font-sans">
-          🔒 100% In-Browser & Private
+          🔒 Client-side & private — stored only on this device
         </div>
 
         {/* Action Buttons */}

@@ -19,8 +19,8 @@ export const BrandLogo: React.FC<BrandLogoProps> = ({
 
   const textDimensions = {
     sm: 'text-base',
-    md: 'text-lg',
-    lg: 'text-2xl',
+    md: 'text-xl sm:text-2xl',
+    lg: 'text-2xl sm:text-3xl',
   }[size];
 
   return (

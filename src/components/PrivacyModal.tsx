@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { X, Lock, EyeOff, Trash2 } from 'lucide-react';
+import { X, Lock, EyeOff, Trash2, Users } from 'lucide-react';
 
 interface PrivacyModalProps {
   isOpen: boolean;
@@ -213,7 +213,43 @@ export const PrivacyModal: React.FC<PrivacyModalProps> = ({ isOpen, onClose }) =
               </h4>
 
               <p>
-                Kiwalibooth has no backend server, cloud database, or analytics. Your photo bytes are never uploaded. The only network requests are Google Fonts and any optional custom overlay URL you provide yourself.
+                Kiwalibooth has no backend server, cloud database, or analytics trackers. Your photo bytes are never uploaded. The only network requests are Google Fonts, decentralized peer presence signaling when online, and any optional custom overlay URL you provide yourself.
+              </p>
+            </div>
+          </div>
+
+          {/* Privacy Item: Database-Free Live Online Count */}
+          <div
+            className="
+              group
+              flex items-start gap-3
+              p-3
+              rounded-xl
+              border border-transparent
+              hover:border-stone-100 dark:hover:border-stone-800
+              hover:bg-stone-50/70 dark:hover:bg-stone-800/40
+              transition-colors duration-200
+            "
+          >
+            <div className="mt-0.5 shrink-0">
+              <Users className="w-4 h-4 text-theme-primary" />
+            </div>
+
+            <div className="min-w-0">
+              <h4
+                className="
+                  font-fredoka font-semibold
+                  text-black dark:text-white
+                  text-sm
+                  mb-1
+                  leading-snug
+                "
+              >
+                Database-Free Live User Count
+              </h4>
+
+              <p>
+                When your device is connected to the internet, Kiwalibooth counts concurrent visitors in real-time using a decentralized, ephemeral peer-to-peer (WebRTC) mesh. No user accounts, database records, IP addresses, browsing histories, or photos are ever logged or retained. When you disconnect or close the tab, your presence vanishes instantly. If you are offline, Kiwalibooth runs entirely local with zero network calls.
               </p>
             </div>
           </div>
@@ -270,7 +306,7 @@ export const PrivacyModal: React.FC<PrivacyModalProps> = ({ isOpen, onClose }) =
             <strong className="font-semibold text-black dark:text-stone-200">
               Technical Note:
             </strong>{' '}
-            Built on open-source web primitives (WebRTC, HTML5 Canvas, Konva). Check DevTools Application tab for the local `kiwalibooth_db` session store and Network tab to confirm no photo uploads.
+            Built on open-source web primitives (WebRTC, HTML5 Canvas, Konva, and decentralized peer-to-peer ephemeral presence). Check DevTools Application tab for the local `kiwalibooth_db` session store and Network tab to confirm zero photo telemetry.
           </div>
         </main>
 

@@ -120,7 +120,7 @@ export const ViewfinderSettings: React.FC<ViewfinderSettingsProps> = ({
           'w-10 h-10 rounded-full flex items-center justify-center border transition-all cursor-pointer select-none active:scale-95',
           'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white',
           open
-            ? 'bg-theme-primary text-white border-theme-primary shadow-md'
+            ? 'bg-theme-primary text-white border-theme-primary'
             : 'bg-white/5 text-white/90 border-white/10 hover:bg-white/15 hover:text-white',
         ].join(' ')}
       >
@@ -130,7 +130,7 @@ export const ViewfinderSettings: React.FC<ViewfinderSettingsProps> = ({
       {open && (
         <div
           role="menu"
-          className={`absolute w-60 sm:w-64 rounded-2xl border border-white/20 bg-black/90 backdrop-blur-xl shadow-2xl p-1.5 space-y-1 max-h-[85svh] overflow-y-auto z-50 ${
+          className={`absolute w-60 sm:w-64 rounded-2xl border border-white/20 bg-black/90 backdrop-blur-xl p-1.5 space-y-1 max-h-[85svh] overflow-y-auto z-50 ${
             placement === 'bottom-left'
               ? 'left-0 bottom-11'
               : placement === 'bottom-right'
@@ -154,7 +154,7 @@ export const ViewfinderSettings: React.FC<ViewfinderSettingsProps> = ({
               <span
                 className={[
                   'w-8 h-8 rounded-full flex items-center justify-center shrink-0 transition-colors',
-                  row.active ? 'bg-theme-primary text-white shadow-sm' : 'bg-white/10 text-white/80',
+                  row.active ? 'bg-theme-primary text-white' : 'bg-white/10 text-white/80',
                 ].join(' ')}
               >
                 {row.icon}
@@ -171,7 +171,7 @@ export const ViewfinderSettings: React.FC<ViewfinderSettingsProps> = ({
               >
                 <span
                   className={[
-                    'absolute top-0.5 w-3 h-3 rounded-full bg-white shadow-sm transition-all',
+                    'absolute top-0.5 w-3 h-3 rounded-full bg-white transition-all',
                     row.active ? 'left-3.5' : 'left-0.5',
                   ].join(' ')}
                 />

@@ -78,7 +78,7 @@ export const LayoutSelectScreen: React.FC = () => {
                 onClick={() => toggleLayoutId(layout.id as LayoutId)}
                 className={`p-3.5 rounded-2xl bg-white dark:bg-stone-900 border-2 transition-all flex flex-col justify-between text-left cursor-pointer relative ${
                   isSelected
-                    ? 'border-theme-primary bg-theme-soft/20 dark:bg-stone-800/40 ring-2 ring-theme-primary/30 shadow-sm'
+                    ? 'border-theme-primary bg-theme-soft/20 dark:bg-stone-800/40 ring-2 ring-theme-primary/30'
                     : 'border-stone-200 dark:border-stone-800 hover:border-stone-300 dark:hover:border-stone-700'
                 }`}
               >
@@ -87,7 +87,7 @@ export const LayoutSelectScreen: React.FC = () => {
                   <div
                     className={`w-5 h-5 rounded-full flex items-center justify-center transition-all ${
                       isSelected
-                        ? 'bg-theme-primary text-white shadow-xs ring-2 ring-white dark:ring-stone-900'
+                        ? 'bg-theme-primary text-white ring-2 ring-white dark:ring-stone-900'
                         : 'border-2 border-stone-300 dark:border-stone-700 bg-white dark:bg-stone-800'
                     }`}
                   >
@@ -99,16 +99,16 @@ export const LayoutSelectScreen: React.FC = () => {
                 <div
                   className={`h-28 mb-3 rounded-xl flex items-center justify-center p-2 border transition-all ${
                     isSelected
-                      ? 'bg-theme-soft/25 border-theme-primary/30 shadow-xs'
+                      ? 'bg-theme-soft/25 border-theme-primary/30'
                       : 'bg-stone-50 dark:bg-stone-800 border-stone-100 dark:border-stone-700'
                   }`}
                 >
                   <div
-                    className={`bg-white dark:bg-stone-900 rounded p-1 flex flex-col gap-1 items-center justify-center shadow-xs transition-all ${
+                    className={`bg-white dark:bg-stone-900 rounded p-1 flex flex-col gap-1 items-center justify-center transition-all ${
                       layout.id === 'single' ? 'w-16 h-20' : 'w-12 h-24'
                     } ${
                       isSelected
-                        ? 'border-2 border-theme-primary shadow-sm'
+                        ? 'border-2 border-theme-primary'
                         : 'border border-stone-200 dark:border-stone-700'
                     }`}
                   >
@@ -178,14 +178,14 @@ export const LayoutSelectScreen: React.FC = () => {
                 onClick={() => !isThemeLocked && setSelectedTemplateId(tmpl.id)}
                 className={`p-3 rounded-2xl bg-white dark:bg-stone-900 border-2 transition-all flex flex-col justify-between text-left cursor-pointer relative ${
                   isSelected
-                    ? 'border-theme-primary bg-theme-soft/20 dark:bg-stone-800/40 ring-2 ring-theme-primary/30 shadow-sm'
+                    ? 'border-theme-primary bg-theme-soft/20 dark:bg-stone-800/40 ring-2 ring-theme-primary/30'
                     : 'border-stone-200 dark:border-stone-800 hover:border-stone-300 dark:hover:border-stone-700'
                 }`}
               >
                 {/* Visual Authentic Vertical Photostrip Preview */}
                 <div className="h-36 sm:h-40 rounded-xl p-2 mb-2 flex items-center justify-center bg-stone-50/70 dark:bg-stone-800/50 border border-stone-100 dark:border-stone-800 overflow-hidden relative">
                   <div
-                    className={`w-16 sm:w-20 h-full rounded-md border p-1.5 flex flex-col justify-between items-center shadow-md transition-transform duration-200 relative ${
+                    className={`w-16 sm:w-20 h-full rounded-md border p-1.5 flex flex-col justify-between items-center transition-transform duration-200 relative ${
                       tmpl.theme === 'noir' ? 'ring-1 ring-stone-700' : ''
                     }`}
                     style={{
@@ -196,7 +196,7 @@ export const LayoutSelectScreen: React.FC = () => {
                     {/* Simulated vertical cuts */}
                     <div className="w-full flex flex-col gap-1 items-center">
                       <div
-                        className="w-full h-8 sm:h-9 rounded-[2px] border flex items-center justify-center text-[7px] font-fredoka font-semibold shadow-xs"
+                        className="w-full h-8 sm:h-9 rounded-[2px] border flex items-center justify-center text-[7px] font-fredoka font-semibold"
                         style={{
                           borderColor: tmpl.borderColor,
                           backgroundColor: tmpl.theme === 'noir' ? '#1F1F24' : tmpl.backgroundColor === '#FFFFFF' ? '#F1F5F9' : '#FFFFFF',
@@ -206,7 +206,7 @@ export const LayoutSelectScreen: React.FC = () => {
                         <span>1</span>
                       </div>
                       <div
-                        className="w-full h-8 sm:h-9 rounded-[2px] border flex items-center justify-center text-[7px] font-fredoka font-semibold shadow-xs"
+                        className="w-full h-8 sm:h-9 rounded-[2px] border flex items-center justify-center text-[7px] font-fredoka font-semibold"
                         style={{
                           borderColor: tmpl.borderColor,
                           backgroundColor: tmpl.theme === 'noir' ? '#1F1F24' : tmpl.backgroundColor === '#FFFFFF' ? '#F1F5F9' : '#FFFFFF',
@@ -245,7 +245,7 @@ export const LayoutSelectScreen: React.FC = () => {
 
                   <div className="w-5 h-5 flex-shrink-0 flex items-center justify-center ml-1">
                     {isSelected && (
-                      <div className="w-5 h-5 rounded-full bg-theme-primary text-white flex items-center justify-center shadow-xs">
+                      <div className="w-5 h-5 rounded-full bg-theme-primary text-white flex items-center justify-center">
                         <Check className="w-3 h-3" />
                       </div>
                     )}
@@ -266,14 +266,14 @@ export const LayoutSelectScreen: React.FC = () => {
                 }}
                 className={`p-3 rounded-2xl bg-white dark:bg-stone-900 border-2 transition-all flex flex-col justify-between text-left cursor-pointer relative ${
                   isSelected
-                    ? 'border-theme-primary bg-theme-soft/20 dark:bg-stone-800/40 ring-2 ring-theme-primary/30 shadow-sm'
+                    ? 'border-theme-primary bg-theme-soft/20 dark:bg-stone-800/40 ring-2 ring-theme-primary/30'
                     : 'border-stone-200 dark:border-stone-800 hover:border-stone-300 dark:hover:border-stone-700'
                 }`}
               >
                 {/* Visual Custom Photostrip Preview */}
                 <div className="h-36 sm:h-40 rounded-xl p-2 mb-2 flex items-center justify-center bg-stone-50/70 dark:bg-stone-800/50 border border-stone-100 dark:border-stone-800 overflow-hidden relative">
                   <div
-                    className="w-16 sm:w-20 h-full rounded-md border p-1.5 flex flex-col justify-between items-center shadow-md transition-transform duration-200 relative"
+                    className="w-16 sm:w-20 h-full rounded-md border p-1.5 flex flex-col justify-between items-center transition-transform duration-200 relative"
                     style={{
                       backgroundColor: customTheme.backgroundColor,
                       borderColor: customTheme.borderColor,
@@ -282,7 +282,7 @@ export const LayoutSelectScreen: React.FC = () => {
                     {/* Simulated vertical cuts with custom colors */}
                     <div className="w-full flex flex-col gap-1 items-center">
                       <div
-                        className="w-full h-8 sm:h-9 rounded-[2px] border flex items-center justify-center text-[7px] font-fredoka font-semibold shadow-xs"
+                        className="w-full h-8 sm:h-9 rounded-[2px] border flex items-center justify-center text-[7px] font-fredoka font-semibold"
                         style={{
                           borderColor: customTheme.borderColor,
                           backgroundColor: customTheme.backgroundColor === '#18181B' ? '#27272A' : '#FFFFFF',
@@ -292,7 +292,7 @@ export const LayoutSelectScreen: React.FC = () => {
                         <span>1</span>
                       </div>
                       <div
-                        className="w-full h-8 sm:h-9 rounded-[2px] border flex items-center justify-center text-[7px] font-fredoka font-semibold shadow-xs"
+                        className="w-full h-8 sm:h-9 rounded-[2px] border flex items-center justify-center text-[7px] font-fredoka font-semibold"
                         style={{
                           borderColor: customTheme.borderColor,
                           backgroundColor: customTheme.backgroundColor === '#18181B' ? '#27272A' : '#FFFFFF',
@@ -332,7 +332,7 @@ export const LayoutSelectScreen: React.FC = () => {
 
                     <div className="w-5 h-5 flex-shrink-0 flex items-center justify-center ml-1">
                       {isSelected && (
-                        <div className="w-5 h-5 rounded-full bg-theme-primary text-white flex items-center justify-center shadow-xs">
+                        <div className="w-5 h-5 rounded-full bg-theme-primary text-white flex items-center justify-center">
                           <Check className="w-3 h-3" />
                         </div>
                       )}
@@ -403,7 +403,7 @@ export const LayoutSelectScreen: React.FC = () => {
             onClick={() => setStep('capture')}
             disabled={!isLaunchReady}
             className={`soft-btn-coral text-sm px-8 py-3.5 flex items-center justify-center gap-2 transition-all ${
-              isLaunchReady ? 'cursor-pointer' : 'opacity-40 cursor-not-allowed shadow-none'
+              isLaunchReady ? 'cursor-pointer' : 'opacity-40 cursor-not-allowed'
             }`}
           >
             {isLaunchReady ? (

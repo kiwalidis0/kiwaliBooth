@@ -88,7 +88,7 @@
 
 .soft-btn-coral {
   background-color: var(--theme-primary, #FF6B81);
-  @apply inline-flex items-center justify-center font-semibold px-6 py-2.5 rounded-xl text-white active:scale-[0.98] transition-all duration-150 cursor-pointer select-none border border-transparent shadow-sm;
+  @apply inline-flex items-center justify-center font-semibold px-6 py-2.5 rounded-xl text-white active:scale-[0.98] transition-all duration-150 cursor-pointer select-none border border-transparent;
 }
 
 .soft-btn-coral:hover {
@@ -101,7 +101,7 @@
 
 /* Critical Red Danger Button for Alerts */
 .soft-btn-danger {
-  @apply inline-flex items-center justify-center font-semibold px-5 py-2 rounded-xl bg-red-600 hover:bg-red-700 text-white active:scale-[0.98] transition-all duration-150 cursor-pointer select-none border border-transparent shadow-sm;
+  @apply inline-flex items-center justify-center font-semibold px-5 py-2 rounded-xl bg-red-600 hover:bg-red-700 text-white active:scale-[0.98] transition-all duration-150 cursor-pointer select-none border border-transparent;
 }
 
 /* Custom scrollbars */

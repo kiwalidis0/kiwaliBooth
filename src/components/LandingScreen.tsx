@@ -13,6 +13,7 @@ import {
 } from 'lucide-react';
 import { useBooth } from '../context/useBooth';
 import { usePWAInstall } from '../hooks/usePWAInstall';
+import { OnlineUsersBadge } from './OnlineUsersBadge';
 import { MOCK_SELFIE_LIST } from '../utils/mockPhotos';
 import type { LayoutId } from '../types/photobooth';
 
@@ -115,7 +116,10 @@ export const LandingScreen: React.FC<LandingScreenProps> = ({ onOpenPrivacy }) =
       className="py-10 sm:py-16 px-4 max-w-6xl mx-auto flex flex-col items-center"
     >
       {/* Hero Headline */}
-      <div className="text-center max-w-2xl mb-8">
+      <div className="text-center max-w-2xl mb-8 flex flex-col items-center">
+        {/* Active Online Users Indicator */}
+        <OnlineUsersBadge onOpenPrivacy={onOpenPrivacy} className="mb-4" />
+
         <h1 className="text-4xl sm:text-5xl lg:text-6xl font-fredoka font-semibold text-stone-900 dark:text-white tracking-tight leading-[1.15] mb-4">
           Capture memories. <br />
           <span className="text-kiwali-coral">Print your cutouts.</span>
@@ -144,7 +148,7 @@ export const LandingScreen: React.FC<LandingScreenProps> = ({ onOpenPrivacy }) =
       {canInstall && (
         <button
           onClick={promptInstall}
-          className="mt-2 mb-2 inline-flex items-center gap-1.5 px-4 py-2 rounded-full bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-700 text-xs font-medium text-stone-600 dark:text-stone-300 hover:border-theme-primary hover:text-theme-primary transition-colors cursor-pointer shadow-sm"
+          className="mt-2 mb-2 inline-flex items-center gap-1.5 px-4 py-2 rounded-full bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-700 text-xs font-medium text-stone-600 dark:text-stone-300 hover:border-theme-primary hover:text-theme-primary transition-colors cursor-pointer"
         >
           <Download className="w-3.5 h-3.5" />
           <span>Add to Home Screen</span>
@@ -156,7 +160,7 @@ export const LandingScreen: React.FC<LandingScreenProps> = ({ onOpenPrivacy }) =
         {/* Interaction Hint Badge */}
         <button
           onClick={handleNextCard}
-          className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-kiwali-soft-pink/50 text-stone-800 dark:text-stone-200 dark:bg-stone-800 text-xs font-medium mb-4 border border-stone-200 dark:border-stone-700 hover:scale-105 transition-transform cursor-pointer shadow-sm"
+          className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-kiwali-soft-pink/50 text-stone-800 dark:text-stone-200 dark:bg-stone-800 text-xs font-medium mb-4 border border-stone-200 dark:border-stone-700 hover:scale-105 transition-transform cursor-pointer"
         >
           <RotateCw className="w-3 h-3 text-kiwali-coral animate-spin-slow" />
           <span>Click deck to flip strip</span>
@@ -194,14 +198,12 @@ export const LandingScreen: React.FC<LandingScreenProps> = ({ onOpenPrivacy }) =
               <div
                 key={strip.id}
                 data-card-index={idx}
-                className="absolute inset-0 flex items-center justify-center transition-shadow duration-300"
+                className="absolute inset-0 flex items-center justify-center"
                 style={{
                   transform: `translate3d(${xOff}px, ${yOff}px, 0) rotate(${rot}deg) scale(${sc})`,
                   opacity: op,
                   zIndex: zIdx,
                   pointerEvents: isTop ? 'auto' : 'none',
-                  // Enhance shadow on the top card on hover
-                  filter: isTop ? 'drop-shadow(0 15px 25px rgba(0,0,0,0.12))' : 'drop-shadow(0 4px 6px rgba(0,0,0,0.05))'
                 }}
               >
                 {/* Actual Strip */}

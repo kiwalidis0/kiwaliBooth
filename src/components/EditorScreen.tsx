@@ -1053,7 +1053,7 @@ export const EditorScreen: React.FC = () => {
           <div className="w-full flex flex-col items-center">
             {/* Multi-Layout Switcher Bar (when multiple layouts chosen) */}
             {selectedLayoutIds.length > 1 && (
-              <div className="w-full flex items-center justify-between mb-2.5 px-3 py-1.5 rounded-xl bg-white dark:bg-stone-800 border border-stone-200 dark:border-stone-700 shadow-sm max-w-sm">
+              <div className="w-full flex items-center justify-between mb-2.5 px-3 py-1.5 rounded-xl bg-white dark:bg-stone-800 border border-stone-200 dark:border-stone-700 max-w-sm">
                 <span className="text-[11px] font-fredoka font-semibold text-theme-primary">
                   Layout:
                 </span>
@@ -1070,7 +1070,7 @@ export const EditorScreen: React.FC = () => {
                         }}
                         className={`px-2.5 py-1 rounded-lg text-xs font-fredoka transition-all cursor-pointer ${
                           isCurrentLayout
-                            ? 'soft-btn-coral !p-1 !px-2.5 !text-white font-bold shadow-xs'
+                            ? 'soft-btn-coral !p-1 !px-2.5 !text-white font-bold'
                             : 'bg-stone-100 dark:bg-stone-700 text-stone-600 dark:text-stone-300 hover:bg-stone-200'
                         }`}
                       >
@@ -1083,7 +1083,7 @@ export const EditorScreen: React.FC = () => {
             )}
 
             {/* Responsive Frame Navigation Bar */}
-            <div className="w-full flex items-center justify-between mb-2 px-3 py-1.5 rounded-xl bg-white dark:bg-stone-800 border border-stone-200 dark:border-stone-700 shadow-sm max-w-sm">
+            <div className="w-full flex items-center justify-between mb-2 px-3 py-1.5 rounded-xl bg-white dark:bg-stone-800 border border-stone-200 dark:border-stone-700 max-w-sm">
               <div className="flex items-center gap-1">
                 <button
                   onClick={handleUndo}
@@ -1145,7 +1145,7 @@ export const EditorScreen: React.FC = () => {
             </div>
 
             {/* Always-Visible Photo Tray with Draggable & Click-to-Assign Thumbnails */}
-            <div className="w-full max-w-sm bg-white dark:bg-stone-800 px-3 py-2 rounded-xl border border-stone-200 dark:border-stone-700 shadow-xs mb-2">
+            <div className="w-full max-w-sm bg-white dark:bg-stone-800 px-3 py-2 rounded-xl border border-stone-200 dark:border-stone-700 mb-2">
               <div className="flex items-center justify-between mb-1.5">
                 <div className="flex items-center gap-1.5">
                   <GripHorizontal className="w-3.5 h-3.5 text-stone-400" />
@@ -1181,7 +1181,7 @@ export const EditorScreen: React.FC = () => {
                       }}
                       className={`group relative w-11 h-11 sm:w-12 sm:h-12 rounded-lg overflow-hidden border-2 transition-all cursor-grab active:cursor-grabbing flex-shrink-0 select-none touch-none ${
                         isCurrentlyInSelectedSlot
-                          ? 'border-theme-primary ring-2 ring-theme-primary/30 shadow-sm scale-105'
+                          ? 'border-theme-primary ring-2 ring-theme-primary/30 scale-105'
                           : 'border-stone-200 dark:border-stone-700 opacity-80 hover:opacity-100'
                       }`}
                       title={`Shot #${idx + 1} - Drag onto a frame or click to assign`}
@@ -1261,7 +1261,7 @@ export const EditorScreen: React.FC = () => {
             )}
 
             <div
-              className="rounded-xl overflow-hidden bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-700 shadow-md"
+              className="rounded-xl overflow-hidden bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-700"
               style={{
                 width: layout.width * previewScale,
                 height: layout.height * previewScale,
@@ -1366,7 +1366,7 @@ export const EditorScreen: React.FC = () => {
                   onClick={() => setActiveTab(tab.id as typeof activeTab)}
                   className={`flex flex-col items-center py-2 px-1 rounded-lg text-xs font-medium transition-all cursor-pointer ${
                     isActive
-                      ? 'bg-theme-soft/50 dark:bg-stone-800 text-theme-primary border border-theme-primary shadow-xs font-semibold'
+                      ? 'bg-theme-soft/50 dark:bg-stone-800 text-theme-primary border border-theme-primary font-semibold'
                       : 'text-stone-600 dark:text-stone-400 hover:text-black dark:hover:text-white'
                   }`}
                 >
@@ -1540,7 +1540,7 @@ export const EditorScreen: React.FC = () => {
                     }`}
                   >
                     <span
-                      className={`pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow-md ring-0 transition duration-200 ease-in-out ${
+                      className={`pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white ring-0 transition duration-200 ease-in-out ${
                         dateStamp.enabled ? 'translate-x-4' : 'translate-x-0'
                       }`}
                     />
@@ -1567,7 +1567,7 @@ export const EditorScreen: React.FC = () => {
                         }`}
                       >
                         <span
-                          className={`pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow-md ring-0 transition duration-200 ease-in-out ${
+                          className={`pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white ring-0 transition duration-200 ease-in-out ${
                             dateStamp.stampEnabled ? 'translate-x-4' : 'translate-x-0'
                           }`}
                         />
@@ -1669,7 +1669,7 @@ export const EditorScreen: React.FC = () => {
                         }`}
                       >
                         <span
-                          className={`pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow-md ring-0 transition duration-200 ease-in-out ${
+                          className={`pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white ring-0 transition duration-200 ease-in-out ${
                             dateStamp.dateEnabled ? 'translate-x-4' : 'translate-x-0'
                           }`}
                         />
@@ -1800,7 +1800,7 @@ export const EditorScreen: React.FC = () => {
                           type="button"
                           onClick={() => setDateStamp(prev => ({ ...prev, color: c }))}
                           aria-label={`Select color ${c}`}
-                          className={`w-7 h-7 rounded-full border border-stone-300 dark:border-stone-600 transition-all cursor-pointer shadow-xs ${
+                          className={`w-7 h-7 rounded-full border border-stone-300 dark:border-stone-600 transition-all cursor-pointer ${
                             dateStamp.color === c ? 'scale-110 ring-2 ring-kiwali-coral ring-offset-2 ring-offset-white dark:ring-offset-stone-900' : 'hover:scale-105'
                           }`}
                           style={{ backgroundColor: c }}
@@ -1841,7 +1841,7 @@ export const EditorScreen: React.FC = () => {
                     onClick={() => setStickerCategory(cat)}
                     className={`px-2.5 py-1 rounded-lg text-xs font-medium whitespace-nowrap transition-all cursor-pointer ${
                       stickerCategory === cat
-                        ? 'soft-btn-coral !p-1 !px-2.5 !text-white font-bold shadow-xs'
+                        ? 'soft-btn-coral !p-1 !px-2.5 !text-white font-bold'
                         : 'bg-stone-100 dark:bg-stone-800 text-stone-600 dark:text-stone-400 hover:bg-stone-200'
                     }`}
                   >
@@ -1861,7 +1861,7 @@ export const EditorScreen: React.FC = () => {
                       key={stk.id}
                       type="button"
                       onClick={() => addSticker('', undefined, undefined, stk.dataUrl)}
-                      className="group aspect-square rounded-xl bg-white dark:bg-stone-900 hover:bg-stone-100 dark:hover:bg-stone-800 border border-stone-200 dark:border-stone-700 p-1.5 flex flex-col items-center justify-center hover:scale-105 active:scale-95 transition-all shadow-2xs hover:shadow-xs cursor-pointer"
+                      className="group aspect-square rounded-xl bg-white dark:bg-stone-900 hover:bg-stone-100 dark:hover:bg-stone-800 border border-stone-200 dark:border-stone-700 p-1.5 flex flex-col items-center justify-center hover:scale-105 active:scale-95 transition-all cursor-pointer"
                       title={`Add ${stk.name}`}
                     >
                       <img
@@ -1910,7 +1910,7 @@ export const EditorScreen: React.FC = () => {
                       key={`${emoji}-${idx}`}
                       type="button"
                       onClick={() => addSticker(emoji)}
-                      className="w-9 h-9 rounded-lg bg-white dark:bg-stone-900 hover:bg-stone-100 dark:hover:bg-stone-800 border border-stone-200 dark:border-stone-700 flex items-center justify-center text-lg active:scale-95 transition-transform cursor-pointer hover:shadow-2xs"
+                      className="w-9 h-9 rounded-lg bg-white dark:bg-stone-900 hover:bg-stone-100 dark:hover:bg-stone-800 border border-stone-200 dark:border-stone-700 flex items-center justify-center text-lg active:scale-95 transition-transform cursor-pointer"
                       title="Add emoji sticker"
                     >
                       {emoji}

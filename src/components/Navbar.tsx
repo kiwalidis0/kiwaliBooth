@@ -156,7 +156,7 @@ export const Navbar: React.FC = () => {
                     onClick={() => handleStepClick(s.id)}
                     className={`flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium transition-all ${
                       isActive
-                        ? 'bg-white dark:bg-stone-900 text-theme-primary border border-theme-primary shadow-sm font-semibold'
+                        ? 'bg-white dark:bg-stone-900 text-theme-primary border border-theme-primary font-semibold'
                         : isPast
                         ? 'text-black dark:text-stone-300 hover:text-theme-primary cursor-pointer'
                         : 'text-stone-400 dark:text-stone-600 cursor-not-allowed'
@@ -180,7 +180,7 @@ export const Navbar: React.FC = () => {
             </nav>
           )}
 
-          {/* Navbar Tools Menu (Palette, Font Size, Sound, Dark Mode) */}
+          {/* Navbar Right Actions: Tools Menu */}
           <div className="flex items-center gap-2 flex-shrink-0">
             <NavbarToolsMenu />
           </div>
@@ -201,7 +201,7 @@ export const Navbar: React.FC = () => {
       {step !== 'landing' && step !== 'capture' && (
         <aside
           aria-label="Mobile Navigation & Actions"
-          className="sm:hidden fixed bottom-3 left-1/2 -translate-x-1/2 z-50 w-[calc(100vw-1.5rem)] max-w-md bg-white/95 dark:bg-stone-900/95 backdrop-blur-xl border border-stone-200/90 dark:border-stone-800 shadow-2xl rounded-full p-1.5 px-2 flex items-center justify-between gap-1.5 transition-all duration-300 animate-in fade-in slide-in-from-bottom-3 overflow-hidden"
+          className="sm:hidden fixed bottom-3 left-1/2 -translate-x-1/2 z-50 w-[calc(100vw-1.5rem)] max-w-md bg-white/95 dark:bg-stone-900/95 backdrop-blur-xl border border-stone-200/90 dark:border-stone-800 rounded-full p-1.5 px-2 flex items-center justify-between gap-1.5 transition-all duration-300 animate-in fade-in slide-in-from-bottom-3 overflow-hidden"
           style={{ marginBottom: 'var(--safe-bottom, 0px)' }}
         >
           {/* Left: Previous / Back Button */}
@@ -235,8 +235,8 @@ export const Navbar: React.FC = () => {
                 disabled={mobileAction.disabled}
                 className={`h-8 px-3 rounded-full text-xs font-fredoka font-semibold flex items-center gap-1 transition-all flex-shrink-0 cursor-pointer ${
                   mobileAction.disabled
-                    ? 'bg-stone-200 dark:bg-stone-800 text-stone-400 cursor-not-allowed shadow-none'
-                    : 'bg-theme-primary hover:bg-theme-primary-hover text-white shadow-xs active:scale-95'
+                    ? 'bg-stone-200 dark:bg-stone-800 text-stone-400 cursor-not-allowed'
+                    : 'bg-theme-primary hover:bg-theme-primary-hover text-white active:scale-95'
                 }`}
               >
                 <mobileAction.icon className="w-3.5 h-3.5" />

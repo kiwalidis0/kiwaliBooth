@@ -104,7 +104,7 @@ export const QRShareModal: React.FC<QRShareModalProps> = ({
         </p>
 
         {/* QR Code Container */}
-        <div className="bg-white p-3 rounded-2xl border border-stone-200 dark:border-stone-700 shadow-inner mb-4 flex items-center justify-center">
+        <div className="bg-white p-3 rounded-2xl border border-stone-200 dark:border-stone-700 mb-4 flex items-center justify-center">
           {qrCodeUrl ? (
             <img src={qrCodeUrl} alt="Scan QR code" className="w-48 h-48 rounded-lg" />
           ) : (
@@ -124,7 +124,7 @@ export const QRShareModal: React.FC<QRShareModalProps> = ({
           {hasNativeShare && (
             <button
               onClick={handleNativeShare}
-              className="w-full soft-btn-coral py-2.5 px-4 text-xs flex items-center justify-center gap-2 cursor-pointer shadow-sm"
+              className="w-full soft-btn-coral py-2.5 px-4 text-xs flex items-center justify-center gap-2 cursor-pointer"
             >
               <Share2 className="w-4 h-4" />
               <span>Share / AirDrop</span>

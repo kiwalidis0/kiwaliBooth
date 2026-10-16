@@ -183,7 +183,6 @@ export const ConfirmModal: React.FC<ConfirmModalProps> = ({
                 bg-theme-primary 
                 text-white
                 hover:opacity-90
-                shadow-sm
                 focus:outline-none
                 transition-all duration-200
                 active:scale-[0.98]

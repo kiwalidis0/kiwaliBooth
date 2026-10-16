@@ -34,12 +34,12 @@ export const SessionRestoreBanner: React.FC = () => {
       aria-label="Previous session recovery banner"
       className="w-full max-w-xl mx-auto mt-6 mb-4 px-3 animate-in fade-in slide-in-from-top-4 duration-300 ease-out"
     >
-      <div className="bg-white dark:bg-stone-900 border border-stone-100 dark:border-stone-800 rounded-[20px] shadow-sm overflow-hidden">
+      <div className="bg-white dark:bg-stone-900 border border-stone-100 dark:border-stone-800 rounded-[20px] overflow-hidden">
         <div className="p-4">
           {/* Row 1: identity left, photo proof right */}
           <div className="flex items-center gap-3.5">
             {/* Soft pink/coral squircle icon */}
-            <div className="w-11 h-11 rounded-2xl bg-rose-400 dark:bg-rose-500 text-white flex items-center justify-center shrink-0 shadow-sm">
+            <div className="w-11 h-11 rounded-2xl bg-rose-400 dark:bg-rose-500 text-white flex items-center justify-center shrink-0">
               <History className="w-5 h-5 stroke-[2.5]" />
             </div>
             
@@ -63,7 +63,7 @@ export const SessionRestoreBanner: React.FC = () => {
                     loading="lazy"
                     // zIndex applied inline to ensure first image stays on top visually
                     style={{ zIndex: thumbs.length - i }}
-                    className="relative w-10 h-10 rounded-lg object-cover border-[2.5px] border-white dark:border-stone-900 shadow-sm bg-stone-100 dark:bg-stone-800"
+                    className="relative w-10 h-10 rounded-lg object-cover border-[2.5px] border-white dark:border-stone-900 bg-stone-100 dark:bg-stone-800"
                   />
                 ))}
                 {photoCount > thumbs.length && (
@@ -85,7 +85,7 @@ export const SessionRestoreBanner: React.FC = () => {
             </button>
             <button
               onClick={restoreSession}
-              className="flex-[2] min-h-[42px] bg-rose-400 hover:bg-rose-500 dark:bg-rose-500 dark:hover:bg-rose-600 text-white rounded-xl text-[13.5px] font-semibold flex items-center justify-center gap-1.5 shadow-sm transition-all cursor-pointer active:scale-[0.98]"
+              className="flex-[2] min-h-[42px] bg-rose-400 hover:bg-rose-500 dark:bg-rose-500 dark:hover:bg-rose-600 text-white rounded-xl text-[13.5px] font-semibold flex items-center justify-center gap-1.5 transition-all cursor-pointer active:scale-[0.98]"
             >
               <span>Resume session</span>
               <ArrowRight className="w-4 h-4" />

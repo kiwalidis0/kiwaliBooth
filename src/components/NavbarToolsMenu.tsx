@@ -68,14 +68,14 @@ export const NavbarToolsMenu: React.FC = () => {
       <button
         onClick={() => setIsOpen(prev => !prev)}
         title="Customize Theme, Fonts & Sound"
-        className={`w-8 h-8 sm:w-auto sm:px-3 sm:py-1.5 rounded-full border text-xs font-semibold flex items-center justify-center sm:gap-2 transition-all cursor-pointer shadow-xs flex-shrink-0 ${
+        className={`w-8 h-8 sm:w-auto sm:px-3 sm:py-1.5 rounded-full border text-xs font-semibold flex items-center justify-center sm:gap-2 transition-all cursor-pointer flex-shrink-0 ${
           isOpen
             ? 'border-theme-primary bg-theme-soft/50 dark:bg-stone-800 ring-2 ring-theme-primary/30 text-black dark:text-white'
             : 'border-stone-200 dark:border-stone-700 bg-white dark:bg-stone-900 text-black dark:text-white hover:border-theme-primary hover:bg-theme-soft/20 dark:hover:bg-stone-800'
         }`}
       >
         <span
-          className="hidden sm:inline-block w-2.5 h-2.5 rounded-full flex-shrink-0 shadow-xs ring-2 ring-white dark:ring-stone-900"
+          className="hidden sm:inline-block w-2.5 h-2.5 rounded-full flex-shrink-0 ring-2 ring-white dark:ring-stone-900"
           style={{ backgroundColor: activePalette.color }}
         />
         <Palette className="w-4 h-4 sm:w-3.5 sm:h-3.5 text-theme-primary" />
@@ -87,7 +87,7 @@ export const NavbarToolsMenu: React.FC = () => {
 
       {/* Floating Tools Popover */}
       {isOpen && (
-        <div className="absolute right-0 mt-2 w-72 sm:w-80 max-w-[calc(100vw-2rem)] bg-white dark:bg-stone-900 rounded-2xl border border-stone-200 dark:border-stone-800 shadow-xl p-4 z-50 space-y-4">
+        <div className="absolute right-0 mt-2 w-72 sm:w-80 max-w-[calc(100vw-2rem)] bg-white dark:bg-stone-900 rounded-2xl border border-stone-200 dark:border-stone-800 p-4 z-50 space-y-4">
           {/* Header */}
           <div className="flex items-center justify-between pb-2.5 border-b border-stone-100 dark:border-stone-800">
             <div className="flex items-center gap-1.5">
@@ -149,7 +149,7 @@ export const NavbarToolsMenu: React.FC = () => {
                     onClick={() => setFontSize(f.id)}
                     className={`py-1 text-xs rounded-lg font-medium transition-all cursor-pointer ${
                       isSelected
-                        ? 'border border-theme-primary bg-theme-soft/50 text-theme-primary font-semibold shadow-xs'
+                        ? 'border border-theme-primary bg-theme-soft/50 text-theme-primary font-semibold'
                         : 'text-stone-600 dark:text-stone-400 hover:text-black dark:hover:text-white'
                     }`}
                   >
@@ -171,7 +171,7 @@ export const NavbarToolsMenu: React.FC = () => {
                 onClick={() => setIsDarkMode(false)}
                 className={`py-1.5 text-xs rounded-lg font-medium flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
                   !isDarkMode
-                    ? 'bg-white text-black shadow-sm border border-stone-200/80 font-semibold'
+                    ? 'bg-white text-black border border-stone-200/80 font-semibold'
                     : 'text-stone-600 dark:text-stone-400 hover:text-black dark:hover:text-white'
                 }`}
               >
@@ -183,7 +183,7 @@ export const NavbarToolsMenu: React.FC = () => {
                 onClick={() => setIsDarkMode(true)}
                 className={`py-1.5 text-xs rounded-lg font-medium flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
                   isDarkMode
-                    ? 'bg-stone-900 text-white shadow-sm border border-stone-700 font-semibold'
+                    ? 'bg-stone-900 text-white border border-stone-700 font-semibold'
                     : 'text-stone-600 dark:text-stone-400 hover:text-black dark:hover:text-white'
                 }`}
               >
@@ -204,7 +204,7 @@ export const NavbarToolsMenu: React.FC = () => {
                 onClick={() => setIsMuted(false)}
                 className={`py-1.5 text-xs rounded-lg font-medium flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
                   !isMuted
-                    ? 'bg-white dark:bg-stone-900 text-emerald-700 dark:text-emerald-400 shadow-sm border border-stone-200/80 dark:border-stone-700 font-semibold'
+                    ? 'bg-white dark:bg-stone-900 text-emerald-700 dark:text-emerald-400 border border-stone-200/80 dark:border-stone-700 font-semibold'
                     : 'text-stone-500 dark:text-stone-400 hover:text-stone-800 dark:hover:text-stone-200'
                 }`}
               >
@@ -216,7 +216,7 @@ export const NavbarToolsMenu: React.FC = () => {
                 onClick={() => setIsMuted(true)}
                 className={`py-1.5 text-xs rounded-lg font-medium flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
                   isMuted
-                    ? 'bg-white dark:bg-stone-900 text-stone-700 dark:text-stone-300 shadow-sm border border-stone-200/80 dark:border-stone-700 font-semibold'
+                    ? 'bg-white dark:bg-stone-900 text-stone-700 dark:text-stone-300 border border-stone-200/80 dark:border-stone-700 font-semibold'
                     : 'text-stone-500 dark:text-stone-400 hover:text-stone-800 dark:hover:text-stone-200'
                 }`}
               >

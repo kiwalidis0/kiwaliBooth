@@ -40,8 +40,8 @@ export const SnapCircle: React.FC<SnapCircleProps> = ({ onSnap, disabled, countd
         disabled
           ? 'border-white/10 bg-white/5 opacity-40 cursor-not-allowed scale-100'
           : isCountingDown
-          ? 'border-white/80 bg-theme-primary/20 scale-105 shadow-[0_0_20px_rgba(255,107,129,0.6)]'
-          : 'border-white/40 bg-white/10 hover:border-white/70 hover:scale-[1.03] active:scale-[0.96] shadow-xl',
+          ? 'border-white/80 bg-theme-primary/20 scale-105'
+          : 'border-white/40 bg-white/10 hover:border-white/70 hover:scale-[1.03] active:scale-[0.96]',
       ].join(' ')}
     >
       {/* Pink primary capture disc */}
@@ -51,13 +51,13 @@ export const SnapCircle: React.FC<SnapCircleProps> = ({ onSnap, disabled, countd
           disabled
             ? 'bg-stone-600'
             : isCountingDown
-            ? 'bg-theme-primary shadow-[0_0_15px_rgba(255,107,129,0.8)]'
-            : 'bg-theme-primary shadow-[0_2px_12px_rgba(255,107,129,0.4)] hover:brightness-105',
+            ? 'bg-theme-primary'
+            : 'bg-theme-primary hover:brightness-105',
           isRippling ? 'scale-90 brightness-110' : '',
         ].join(' ')}
       >
         {isCountingDown ? (
-          <span className="font-fredoka font-bold text-3xl sm:text-4xl text-white drop-shadow-md animate-pulse">
+          <span className="font-fredoka font-bold text-3xl sm:text-4xl text-white animate-pulse">
             {countdown > 0 ? countdown : ''}
           </span>
         ) : (

@@ -257,7 +257,7 @@ export const DownloadScreen: React.FC = () => {
               <span className="text-[11px] font-fredoka font-semibold text-stone-500 dark:text-stone-400">
                 Select Output to View:
               </span>
-              <div className="p-1 bg-stone-100 dark:bg-stone-800 rounded-xl border border-stone-200 dark:border-stone-700 flex items-center gap-1 shadow-xs flex-wrap justify-center">
+              <div className="p-1 bg-stone-100 dark:bg-stone-800 rounded-xl border border-stone-200 dark:border-stone-700 flex items-center gap-1 flex-wrap justify-center">
                 {selectedLayoutIds.map(layoutId => {
                   const isActive = activeViewLayoutId === layoutId;
                   const cfg = LAYOUTS[layoutId];
@@ -267,7 +267,7 @@ export const DownloadScreen: React.FC = () => {
                       onClick={() => setActiveViewLayoutId(layoutId)}
                       className={`px-3 py-1.5 rounded-lg text-xs font-fredoka font-semibold transition-all cursor-pointer ${
                         isActive
-                          ? 'soft-btn-coral !p-1.5 !px-3 !text-white shadow-xs font-bold'
+                          ? 'soft-btn-coral !p-1.5 !px-3 !text-white font-bold'
                           : 'text-stone-600 dark:text-stone-300 hover:text-black dark:hover:text-white'
                       }`}
                     >
@@ -285,7 +285,7 @@ export const DownloadScreen: React.FC = () => {
           {/* Left Column: Photostrip Dispenser & Canvas Preview */}
           <div className="w-full md:col-span-5 lg:col-span-5 flex flex-col items-center">
             {/* Themed Photobooth Dispenser / Printer Housing */}
-            <div className="w-72 sm:w-80 md:w-full md:max-w-[340px] bg-white dark:bg-stone-900 border-2 border-b-0 border-theme-primary/30 rounded-t-2xl shadow-md relative z-20 px-4 pt-3 pb-2.5 flex flex-col items-center gap-2">
+            <div className="w-72 sm:w-80 md:w-full md:max-w-[340px] bg-white dark:bg-stone-900 border-2 border-b-0 border-theme-primary/30 rounded-t-2xl relative z-20 px-4 pt-3 pb-2.5 flex flex-col items-center gap-2">
               {/* Top Bar: Kiwalibooth on LEFT, Printer Status on RIGHT */}
               <div className="w-full flex items-center justify-between">
                 <div className="font-fredoka font-bold text-base sm:text-lg text-theme-primary tracking-wide text-left flex-shrink-0">
@@ -301,14 +301,14 @@ export const DownloadScreen: React.FC = () => {
               </div>
 
               {/* Recessed Ejection Mouth / Slot where photostrip emerges */}
-              <div className="w-60 sm:w-64 md:w-full md:max-w-[280px] h-2 bg-stone-950 dark:bg-black rounded-full shadow-inner border border-theme-primary/20" />
+              <div className="w-60 sm:w-64 md:w-full md:max-w-[280px] h-2 bg-stone-950 dark:bg-black rounded-full border border-theme-primary/20" />
             </div>
 
             {/* Ejected Photo Strip - Exact cropped dimensions */}
             <div className="w-full overflow-hidden flex justify-center -mt-1 pt-1 relative z-10">
               <div
                 ref={photoStripRef}
-                className="w-60 sm:w-64 md:w-full md:max-w-[280px] bg-white dark:bg-stone-900 rounded-b-xl overflow-hidden border border-stone-200 dark:border-stone-800 shadow-md"
+                className="w-60 sm:w-64 md:w-full md:max-w-[280px] bg-white dark:bg-stone-900 rounded-b-xl overflow-hidden border border-stone-200 dark:border-stone-800"
               >
                 {activeImage ? (
                   <img
@@ -327,7 +327,7 @@ export const DownloadScreen: React.FC = () => {
           </div>
 
           {/* Right Column: Desktop Header & All Action Controls */}
-          <div className="w-full md:col-span-7 lg:col-span-7 flex flex-col items-center md:items-start mt-6 md:mt-0 bg-transparent md:bg-white md:dark:bg-stone-900 md:border md:border-stone-200 md:dark:border-stone-800 md:rounded-2xl md:p-6 lg:p-8 md:shadow-xs">
+          <div className="w-full md:col-span-7 lg:col-span-7 flex flex-col items-center md:items-start mt-6 md:mt-0 bg-transparent md:bg-white md:dark:bg-stone-900 md:border md:border-stone-200 md:dark:border-stone-800 md:rounded-2xl md:p-6 lg:p-8">
             {/* Desktop Header (Hidden on mobile) */}
             <div className="hidden md:flex flex-col items-start mb-6">
               <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-theme-soft/50 text-theme-primary dark:bg-stone-800 text-xs font-semibold mb-3 border border-theme-primary/30">
@@ -349,7 +349,7 @@ export const DownloadScreen: React.FC = () => {
                 <span className="text-[11px] font-fredoka font-semibold text-stone-500 dark:text-stone-400">
                   Select Output to View:
                 </span>
-                <div className="p-1 bg-stone-100 dark:bg-stone-800 rounded-xl border border-stone-200 dark:border-stone-700 flex items-center gap-1 shadow-xs flex-wrap">
+                <div className="p-1 bg-stone-100 dark:bg-stone-800 rounded-xl border border-stone-200 dark:border-stone-700 flex items-center gap-1 flex-wrap">
                   {selectedLayoutIds.map(layoutId => {
                     const isActive = activeViewLayoutId === layoutId;
                     const cfg = LAYOUTS[layoutId];
@@ -359,7 +359,7 @@ export const DownloadScreen: React.FC = () => {
                         onClick={() => setActiveViewLayoutId(layoutId)}
                         className={`px-3 py-1.5 rounded-lg text-xs font-fredoka font-semibold transition-all cursor-pointer ${
                           isActive
-                            ? 'soft-btn-coral !p-1.5 !px-3 !text-white shadow-xs font-bold'
+                            ? 'soft-btn-coral !p-1.5 !px-3 !text-white font-bold'
                             : 'text-stone-600 dark:text-stone-300 hover:text-black dark:hover:text-white'
                         }`}
                       >
@@ -379,7 +379,7 @@ export const DownloadScreen: React.FC = () => {
                 <button
                   type="button"
                   onClick={handleCopy}
-                  className="w-full sm:flex-1 h-12 soft-btn-secondary text-xs sm:text-sm px-5 flex items-center justify-center gap-2 cursor-pointer shadow-xs whitespace-nowrap"
+                  className="w-full sm:flex-1 h-12 soft-btn-secondary text-xs sm:text-sm px-5 flex items-center justify-center gap-2 cursor-pointer whitespace-nowrap"
                 >
                   {copied ? (
                     <>
@@ -398,7 +398,7 @@ export const DownloadScreen: React.FC = () => {
                 <button
                   type="button"
                   onClick={() => handleDownload()}
-                  className="w-full sm:flex-1 h-12 soft-btn-coral text-xs sm:text-sm px-5 flex items-center justify-center gap-2 cursor-pointer shadow-md whitespace-nowrap"
+                  className="w-full sm:flex-1 h-12 soft-btn-coral text-xs sm:text-sm px-5 flex items-center justify-center gap-2 cursor-pointer whitespace-nowrap"
                 >
                   <Download className="w-4 h-4" />
                   <span>Save Current</span>
@@ -410,7 +410,7 @@ export const DownloadScreen: React.FC = () => {
                 <button
                   type="button"
                   onClick={handleDownloadAll}
-                  className="w-full h-12 rounded-xl bg-theme-soft/40 dark:bg-stone-800 border border-theme-primary/30 text-theme-primary hover:bg-theme-soft/70 dark:hover:bg-stone-700 text-xs sm:text-sm font-fredoka font-semibold flex items-center justify-center gap-2 transition-all cursor-pointer shadow-xs whitespace-nowrap"
+                  className="w-full h-12 rounded-xl bg-theme-soft/40 dark:bg-stone-800 border border-theme-primary/30 text-theme-primary hover:bg-theme-soft/70 dark:hover:bg-stone-700 text-xs sm:text-sm font-fredoka font-semibold flex items-center justify-center gap-2 transition-all cursor-pointer whitespace-nowrap"
                 >
                   <Layers className="w-4 h-4" />
                   <span>Download All {selectedLayoutIds.length} Cutouts</span>
@@ -423,7 +423,7 @@ export const DownloadScreen: React.FC = () => {
                   <button
                     type="button"
                     onClick={handleOpenGifModal}
-                    className="h-12 rounded-xl bg-purple-50 dark:bg-purple-950/40 border border-purple-200 dark:border-purple-800 text-purple-700 dark:text-purple-300 hover:bg-purple-100 dark:hover:bg-purple-900/50 text-xs sm:text-sm font-fredoka font-semibold flex items-center justify-center gap-1.5 transition-all cursor-pointer shadow-xs whitespace-nowrap"
+                    className="h-12 rounded-xl bg-purple-50 dark:bg-purple-950/40 border border-purple-200 dark:border-purple-800 text-purple-700 dark:text-purple-300 hover:bg-purple-100 dark:hover:bg-purple-900/50 text-xs sm:text-sm font-fredoka font-semibold flex items-center justify-center gap-1.5 transition-all cursor-pointer whitespace-nowrap"
                   >
                     <Film className="w-4 h-4 text-purple-500" />
                     <span>Animated GIF</span>
@@ -433,7 +433,7 @@ export const DownloadScreen: React.FC = () => {
                 <button
                   type="button"
                   onClick={() => setShowQrModal(true)}
-                  className={`h-12 rounded-xl bg-stone-100 dark:bg-stone-800 border border-stone-200 dark:border-stone-700 text-stone-700 dark:text-stone-300 hover:bg-stone-200 dark:hover:bg-stone-700 text-xs sm:text-sm font-fredoka font-semibold flex items-center justify-center gap-1.5 transition-all cursor-pointer shadow-xs whitespace-nowrap ${
+                  className={`h-12 rounded-xl bg-stone-100 dark:bg-stone-800 border border-stone-200 dark:border-stone-700 text-stone-700 dark:text-stone-300 hover:bg-stone-200 dark:hover:bg-stone-700 text-xs sm:text-sm font-fredoka font-semibold flex items-center justify-center gap-1.5 transition-all cursor-pointer whitespace-nowrap ${
                     photos.length <= 1 ? 'col-span-2' : ''
                   }`}
                 >
@@ -548,7 +548,7 @@ export const DownloadScreen: React.FC = () => {
             <button
               onClick={handleDownloadGif}
               disabled={isGeneratingGif || !gifDataUrl}
-              className={`w-full py-2.5 px-4 rounded-xl bg-purple-600 hover:bg-purple-700 text-white font-fredoka font-semibold text-xs flex items-center justify-center gap-2 cursor-pointer shadow-md transition-all ${
+              className={`w-full py-2.5 px-4 rounded-xl bg-purple-600 hover:bg-purple-700 text-white font-fredoka font-semibold text-xs flex items-center justify-center gap-2 cursor-pointer transition-all ${
                 isGeneratingGif || !gifDataUrl ? 'opacity-50 cursor-not-allowed' : ''
               }`}
             >

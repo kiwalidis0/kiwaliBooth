@@ -1002,7 +1002,7 @@ export const CaptureScreen: React.FC = () => {
                   onClick={() => setTimerPickerOpen(prev => !prev)}
                   className={`h-9 px-3 rounded-full text-xs font-fredoka font-semibold flex items-center gap-1.5 transition-all cursor-pointer border ${
                     timerPickerOpen
-                      ? 'bg-theme-primary/20 border-theme-primary text-white shadow-sm'
+                      ? 'bg-theme-primary/20 border-theme-primary text-white'
                       : countdownDuration > 0
                       ? 'bg-white/10 border-white/20 text-white hover:bg-white/15'
                       : 'bg-white/5 border-white/10 text-white/60 hover:text-white hover:bg-white/10'
@@ -1019,7 +1019,7 @@ export const CaptureScreen: React.FC = () => {
               {timerPickerOpen && (
                 <div
                   ref={timerPickerRef}
-                  className="absolute right-full mr-2.5 top-0 bg-stone-900/95 border border-white/15 rounded-2xl p-2.5 shadow-2xl backdrop-blur-xl z-50 flex flex-col gap-2 w-52 animate-in fade-in zoom-in-95 duration-150"
+                  className="absolute right-full mr-2.5 top-0 bg-stone-900/95 border border-white/15 rounded-2xl p-2.5 backdrop-blur-xl z-50 flex flex-col gap-2 w-52 animate-in fade-in zoom-in-95 duration-150"
                 >
                   <div className="flex items-center justify-between text-xs text-white font-fredoka font-semibold px-1">
                     <span className="flex items-center gap-1.5">
@@ -1045,7 +1045,7 @@ export const CaptureScreen: React.FC = () => {
                         }}
                         className={`flex-1 py-1.5 px-1 rounded-lg text-xs font-fredoka font-bold text-center transition-all cursor-pointer ${
                           countdownDuration === n
-                            ? 'bg-theme-primary text-white shadow-sm'
+                            ? 'bg-theme-primary text-white'
                             : 'text-white/70 hover:text-white hover:bg-white/10'
                         }`}
                       >
@@ -1061,7 +1061,7 @@ export const CaptureScreen: React.FC = () => {
                       startCountdownSequence();
                     }}
                     disabled={isCapturing}
-                    className="w-full py-1.5 px-3 soft-btn-coral text-xs rounded-xl flex items-center justify-center gap-1.5 shadow-md cursor-pointer font-fredoka font-semibold active:scale-95"
+                    className="w-full py-1.5 px-3 soft-btn-coral text-xs rounded-xl flex items-center justify-center gap-1.5 cursor-pointer font-fredoka font-semibold active:scale-95"
                   >
                     <Play className="w-3.5 h-3.5 fill-white" />
                     <span>Auto-shoot all ({countdownDuration === 0 ? 'instant' : `${countdownDuration}s`})</span>
@@ -1150,7 +1150,7 @@ export const CaptureScreen: React.FC = () => {
                         aria-label={`Target shot ${idx + 1}`}
                         className={`transition-all duration-200 cursor-pointer flex items-center justify-center ${
                           isCurrent
-                            ? 'w-3.5 h-3.5 rounded-full bg-theme-primary ring-2 ring-theme-primary/40 shadow-[0_0_8px_rgba(255,46,147,0.6)] animate-pulse'
+                            ? 'w-3.5 h-3.5 rounded-full bg-theme-primary ring-2 ring-theme-primary/40 animate-pulse'
                             : isFilled
                             ? 'w-3 h-3 rounded-full bg-emerald-500 text-white flex items-center justify-center'
                             : 'w-2.5 h-2.5 rounded-full border border-stone-300 dark:border-white/30 bg-transparent hover:border-theme-primary'
@@ -1191,11 +1191,11 @@ export const CaptureScreen: React.FC = () => {
         {isLowLight && !lowLightDismissed && hasCameraAccess && !isCapturing && (
           <div
             role="status"
-            className="w-full mb-3 rounded-2xl border border-amber-300 dark:border-amber-500/40 bg-amber-50/95 dark:bg-stone-900/95 text-stone-900 dark:text-white shadow-md backdrop-blur-md overflow-hidden transition-all duration-200 flex animate-in fade-in slide-in-from-top-2"
+            className="w-full mb-3 rounded-2xl border border-amber-300 dark:border-amber-500/40 bg-amber-50/95 dark:bg-stone-900/95 text-stone-900 dark:text-white backdrop-blur-md overflow-hidden transition-all duration-200 flex animate-in fade-in slide-in-from-top-2"
           >
             {/* Left side: Content aesthetics */}
             <div className="flex-1 flex items-start sm:items-center gap-2.5 p-3 pr-2">
-              <span className="shrink-0 w-8 h-8 rounded-xl bg-amber-500/20 border border-amber-400/40 flex items-center justify-center shadow-xs">
+              <span className="shrink-0 w-8 h-8 rounded-xl bg-amber-500/20 border border-amber-400/40 flex items-center justify-center">
                 <MoonStar className="w-4 h-4 text-amber-500 dark:text-amber-300" />
               </span>
               <div className="flex-1 min-w-0">
@@ -1218,7 +1218,7 @@ export const CaptureScreen: React.FC = () => {
                   className={[
                     'flex-1 flex items-center justify-center gap-1 px-2 py-1.5 border-b border-amber-200 dark:border-white/15 text-[11px] font-semibold transition-all cursor-pointer select-none active:scale-95',
                     torchOn
-                      ? 'bg-theme-primary text-white shadow-inner'
+                      ? 'bg-theme-primary text-white'
                       : 'text-stone-700 dark:text-white/80 hover:bg-black/5 dark:hover:bg-white/10',
                   ].join(' ')}
                 >
@@ -1235,7 +1235,7 @@ export const CaptureScreen: React.FC = () => {
                 className={[
                   'flex-1 flex items-center justify-center gap-1.5 px-2 py-1.5 border-b border-amber-200 dark:border-white/15 text-[11px] font-semibold transition-all cursor-pointer select-none active:scale-95',
                   boostEnabled
-                    ? 'bg-theme-primary text-white shadow-inner'
+                    ? 'bg-theme-primary text-white'
                     : 'text-stone-700 dark:text-white/80 hover:bg-black/5 dark:hover:bg-white/10',
                 ].join(' ')}
               >
@@ -1247,7 +1247,7 @@ export const CaptureScreen: React.FC = () => {
                 >
                   <span
                     className={[
-                      'absolute top-0.5 w-2 h-2 rounded-full bg-white shadow transition-all',
+                      'absolute top-0.5 w-2 h-2 rounded-full bg-white transition-all',
                       boostEnabled ? 'left-2.5' : 'left-0.5',
                     ].join(' ')}
                   />
@@ -1457,7 +1457,7 @@ export const CaptureScreen: React.FC = () => {
         />
 
         {/* Unified Bottom Control Area */}
-        <div className="w-full mt-3 bg-white dark:bg-stone-900 p-3 sm:p-4 rounded-2xl border border-stone-200 dark:border-stone-800 shadow-sm space-y-3">
+        <div className="w-full mt-3 bg-white dark:bg-stone-900 p-3 sm:p-4 rounded-2xl border border-stone-200 dark:border-stone-800 space-y-3">
           {/* ROW 1: Capture & Timer Controls */}
           <div className="space-y-2">
             <div className="flex items-center justify-between">
@@ -1491,7 +1491,7 @@ export const CaptureScreen: React.FC = () => {
                     className={[
                       'flex-1 min-h-9 px-2 py-1.5 rounded-lg text-[11px] font-semibold transition-all cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-theme-primary',
                       countdownDuration === n
-                        ? 'bg-white dark:bg-stone-900 text-stone-900 dark:text-white shadow-sm border border-stone-200 dark:border-stone-700'
+                        ? 'bg-white dark:bg-stone-900 text-stone-900 dark:text-white border border-stone-200 dark:border-stone-700'
                         : 'text-stone-500 dark:text-stone-400 hover:text-stone-800 dark:hover:text-stone-200 hover:bg-white/60 dark:hover:bg-white/5 border border-transparent',
                     ].join(' ')}
                   >

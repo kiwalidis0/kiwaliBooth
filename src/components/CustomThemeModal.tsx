@@ -138,7 +138,7 @@ const CustomThemeModalDialog: React.FC<{ onClose: () => void }> = ({ onClose }) 
               <Sparkles className="w-3 h-3 text-theme-primary" /> Live Preview
             </span>
             <div
-              className="w-32 rounded-xl p-2 flex flex-col items-center justify-between shadow-md border transition-all duration-200"
+              className="w-32 rounded-xl p-2 flex flex-col items-center justify-between border transition-all duration-200"
               style={{
                 backgroundColor: draft.backgroundColor,
                 borderColor: draft.borderColor,
@@ -147,7 +147,7 @@ const CustomThemeModalDialog: React.FC<{ onClose: () => void }> = ({ onClose }) 
               {/* Simulated mini photo cutouts */}
               <div className="w-full flex flex-col gap-1.5">
                 <div
-                  className="w-full h-11 rounded border flex items-center justify-center text-[9px] font-fredoka font-semibold shadow-xs"
+                  className="w-full h-11 rounded border flex items-center justify-center text-[9px] font-fredoka font-semibold"
                   style={{
                     borderColor: draft.borderColor,
                     backgroundColor: draft.backgroundColor === '#18181B' ? '#27272A' : '#FFFFFF',
@@ -157,7 +157,7 @@ const CustomThemeModalDialog: React.FC<{ onClose: () => void }> = ({ onClose }) 
                   <span>Cut #1</span>
                 </div>
                 <div
-                  className="w-full h-11 rounded border flex items-center justify-center text-[9px] font-fredoka font-semibold shadow-xs"
+                  className="w-full h-11 rounded border flex items-center justify-center text-[9px] font-fredoka font-semibold"
                   style={{
                     borderColor: draft.borderColor,
                     backgroundColor: draft.backgroundColor === '#18181B' ? '#27272A' : '#FFFFFF',
@@ -351,7 +351,7 @@ const CustomThemeModalDialog: React.FC<{ onClose: () => void }> = ({ onClose }) 
             </button>
             <button
               onClick={handleSaveAndApply}
-              className="soft-btn-coral text-xs px-3.5 sm:px-5 py-1.5 sm:py-2 flex items-center gap-1.5 font-semibold shadow-md cursor-pointer whitespace-nowrap"
+              className="soft-btn-coral text-xs px-3.5 sm:px-5 py-1.5 sm:py-2 flex items-center gap-1.5 font-semibold cursor-pointer whitespace-nowrap"
             >
               <Check className="w-4 h-4" />
               <span>Apply Theme</span>

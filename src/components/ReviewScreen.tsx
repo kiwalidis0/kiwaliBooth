@@ -107,7 +107,7 @@ export const ReviewScreen: React.FC = () => {
           {photos.length > 0 && (
             <button
               onClick={() => setCompareSlot(0)}
-              className="self-start sm:self-center soft-btn-secondary text-xs py-2 px-3.5 flex items-center gap-1.5 cursor-pointer shadow-xs"
+              className="self-start sm:self-center soft-btn-secondary text-xs py-2 px-3.5 flex items-center gap-1.5 cursor-pointer"
             >
               <Maximize2 className="w-3.5 h-3.5 text-theme-primary" />
               <span>Inspect & Compare</span>
@@ -162,7 +162,7 @@ export const ReviewScreen: React.FC = () => {
                     </div>
                   )}
 
-                  <div className="absolute top-2 left-2 bg-theme-primary text-white shadow-xs px-2.5 py-0.5 rounded-md text-xs font-fredoka font-bold flex items-center justify-center select-none">
+                  <div className="absolute top-2 left-2 bg-theme-primary text-white px-2.5 py-0.5 rounded-md text-xs font-fredoka font-bold flex items-center justify-center select-none">
                     #{slotId + 1}
                   </div>
                 </div>

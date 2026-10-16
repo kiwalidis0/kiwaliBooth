@@ -62,7 +62,8 @@ Kiwalibooth is private by design, saved locally only:
 - Photo frames are processed client-side as data URLs, auto-saved to IndexedDB (`kiwalibooth_db`) for 24h session recovery with sessionStorage fallback.
 - Theme, camera, and app preferences persist in `localStorage`. No cookies.
 - "Shoot Another" / "Discard" clears the saved session immediately.
-- No analytics trackers or image telemetry. Only external requests are Google Fonts and optional custom overlay URLs you provide.
+- No analytics trackers or image telemetry. Only external requests are Google Fonts, decentralized peer presence signaling when connected to the internet, and optional custom overlay URLs you provide.
+- Real-time online user count is calculated ephemerally using decentralized peer-to-peer (WebRTC) mesh matchmaking—zero database, zero logs, zero cloud accounts. If offline, the app runs completely locally.
 
 ## 👤 Author
 

@@ -61,7 +61,6 @@ export interface SavedBoothSession {
   selectedLayoutIds: LayoutId[];
   activeStudioLayoutId: LayoutId;
   selectedTemplateId: string;
-  customOverlayUrl: string | null;
   dateStamp: DateStampConfig;
   stickers: StickerItem[];
   timestamp: number;
@@ -88,7 +87,6 @@ export interface TemplateConfig {
   borderColor: string;
   textColor: string;
   accentColor: string;
-  customOverlayUrl?: string; // transparent PNG uploaded from Canva
 }
 
 export type StampFont = 'Fredoka' | 'Open Sans';

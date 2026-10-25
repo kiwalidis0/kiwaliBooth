@@ -345,7 +345,6 @@ const KonvaStickerItem: React.FC<{
 interface PhotostripStageProps {
   layout: LayoutConfig;
   template: TemplateConfig;
-  customOverlayUrl: string | null;
   photos: CapturedPhoto[];
   layoutPhotoAssignments: LayoutPhotoAssignments;
   dateStamp: DateStampConfig;
@@ -366,7 +365,6 @@ const PhotostripStage = React.forwardRef<Konva.Stage, PhotostripStageProps>(
     {
       layout,
       template,
-      customOverlayUrl,
       photos,
       layoutPhotoAssignments,
       dateStamp,
@@ -388,7 +386,6 @@ const PhotostripStage = React.forwardRef<Konva.Stage, PhotostripStageProps>(
       [layout, template]
     );
     const overlaySvgImage = useSimpleImage(overlaySvgUrl);
-    const customOverlayImage = useSimpleImage(customOverlayUrl);
 
     // Safety lock: lock slot photos while any sticker is active/transforming
     const isPhotoLocked = Boolean(selectedStickerId);
@@ -466,14 +463,6 @@ const PhotostripStage = React.forwardRef<Konva.Stage, PhotostripStageProps>(
           {overlaySvgImage && (
             <KonvaImage
               image={overlaySvgImage}
-              width={layout.width}
-              height={layout.height}
-            />
-          )}
-
-          {customOverlayImage && (
-            <KonvaImage
-              image={customOverlayImage}
               width={layout.width}
               height={layout.height}
             />
@@ -592,7 +581,6 @@ export const EditorScreen: React.FC = () => {
     setActiveStudioLayoutId,
     layoutPhotoAssignments,
     assignPhotoToSlot,
-    customOverlayUrl,
     photos,
     setPhotos,
     updatePhoto,
@@ -1279,7 +1267,6 @@ export const EditorScreen: React.FC = () => {
                   ref={stageRef}
                   layout={layout}
                   template={template}
-                  customOverlayUrl={customOverlayUrl}
                   photos={photos}
                   layoutPhotoAssignments={layoutPhotoAssignments}
                   dateStamp={dateStamp}
@@ -1331,7 +1318,6 @@ export const EditorScreen: React.FC = () => {
                   }}
                   layout={lCfg}
                   template={template}
-                  customOverlayUrl={customOverlayUrl}
                   photos={photos}
                   layoutPhotoAssignments={layoutPhotoAssignments}
                   dateStamp={dateStamp}

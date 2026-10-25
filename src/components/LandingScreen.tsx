@@ -300,7 +300,7 @@ export const LandingScreen: React.FC<LandingScreenProps> = ({ onOpenPrivacy }) =
               </h3>
 
               <p className="text-xs text-black dark:text-stone-300 leading-relaxed font-sans">
-                Zero cloud uploads. Captures auto-save to your browser's local IndexedDB for 24h resume, preferences to localStorage.
+                Zero cloud uploads. Your photos stay on your device and are saved in your browser for up to 24 hours so you can resume if you refresh.
               </p>
             </div>
 

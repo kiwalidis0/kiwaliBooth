@@ -93,7 +93,6 @@ export const BoothProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     }
     return DEFAULT_CUSTOM_THEME;
   });
-  const [customOverlayUrl, setCustomOverlayUrl] = useState<string | null>(null);
   const [photos, setPhotos] = useState<CapturedPhoto[]>([]);
   const [retakeIndex, setRetakeIndex] = useState<number | null>(null);
   const [finalImage, setFinalImage] = useState<string | null>(null);
@@ -232,7 +231,6 @@ export const BoothProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         selectedLayoutIds,
         activeStudioLayoutId,
         selectedTemplateId,
-        customOverlayUrl,
         dateStamp,
         stickers,
         timestamp: Date.now(),
@@ -241,7 +239,7 @@ export const BoothProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     }, 600);
 
     return () => clearTimeout(timeout);
-  }, [step, photos, selectedLayoutIds, activeStudioLayoutId, selectedTemplateId, customOverlayUrl, dateStamp, stickers]);
+  }, [step, photos, selectedLayoutIds, activeStudioLayoutId, selectedTemplateId, dateStamp, stickers]);
 
   // Keep audio module in sync & persist
   useEffect(() => {
@@ -385,7 +383,6 @@ export const BoothProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     setSelectedLayoutIds(savedSession.selectedLayoutIds);
     setActiveStudioLayoutId(savedSession.activeStudioLayoutId);
     setSelectedTemplateIdState(savedSession.selectedTemplateId);
-    setCustomOverlayUrl(savedSession.customOverlayUrl);
     setDateStamp(savedSession.dateStamp);
     setStickers(savedSession.stickers);
     setStep(savedSession.step || 'review');
@@ -508,8 +505,6 @@ export const BoothProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         setCaptureOrientation,
         selectedTemplateId,
         setSelectedTemplateId,
-        customOverlayUrl,
-        setCustomOverlayUrl,
         photos,
         setPhotos,
         updatePhoto,

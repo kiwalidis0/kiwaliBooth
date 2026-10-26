@@ -13,7 +13,7 @@ export interface GifGenerationOptions {
 export async function createAnimatedGif(
   dataUrls: string[],
   options: GifGenerationOptions = {}
-): Promise<{ blob: Blob; dataUrl: string }> {
+): Promise<{ blob: Blob; objectUrl: string; dataUrl: string }> {
   if (dataUrls.length === 0) {
     throw new Error('At least one frame is required to generate a GIF');
   }
@@ -75,7 +75,7 @@ export async function createAnimatedGif(
   gif.finish();
   const bytes = gif.bytes();
   const blob = new Blob([bytes as BlobPart], { type: 'image/gif' });
-  const dataUrl = URL.createObjectURL(blob);
+  const objectUrl = URL.createObjectURL(blob);
 
-  return { blob, dataUrl };
+  return { blob, objectUrl, dataUrl: objectUrl };
 }

@@ -27,6 +27,7 @@ import { FilmStrip } from './capture/FilmStrip';
 import { useLowLightDetector } from '../hooks/useLowLightDetector';
 import { useWakeLock } from '../hooks/useWakeLock';
 import { useScreenOrientation } from '../hooks/useScreenOrientation';
+import { useSafeTimers } from '../hooks/useSafeTimers';
 import { processUploadedFile } from '../utils/uploadPipeline';
 import type { CapturedPhoto } from '../types/photobooth';
 
@@ -80,6 +81,8 @@ export const CaptureScreen: React.FC = () => {
 
   const layout = LAYOUTS[selectedLayoutId];
   const shotsCount = Math.max(1, totalRequiredShots || layout?.shotsCount || 4);
+
+  const { safeTimeout, safeInterval, clearTimer, cancelAll } = useSafeTimers();
 
   const videoRef = useRef<HTMLVideoElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
@@ -382,13 +385,13 @@ export const CaptureScreen: React.FC = () => {
     });
 
     setCaptureBadge(`Shot ${targetSlot + 1} captured`);
-    setTimeout(() => setCaptureBadge(null), 1200);
+    safeTimeout(() => setCaptureBadge(null), 1200);
 
     // Smooth flash fadeout
-    setTimeout(() => setShowFlash(false), 240);
+    safeTimeout(() => setShowFlash(false), 240);
 
     return finalUrl;
-  }, [hasCameraAccess, captureFrame, setPhotos]);
+  }, [hasCameraAccess, captureFrame, setPhotos, safeTimeout]);
 
   const handleManualSnap = useCallback(async () => {
     await executeSynchronizedCapture(currentSlotTarget);
@@ -399,12 +402,12 @@ export const CaptureScreen: React.FC = () => {
     } else {
       const nextSlot = currentSlotTarget + 1;
       if (nextSlot >= shotsCount) {
-        setTimeout(() => setStep('review'), 550);
+        safeTimeout(() => setStep('review'), 550);
       } else {
         setCurrentSlotTarget(nextSlot);
       }
     }
-  }, [currentSlotTarget, executeSynchronizedCapture, retakeIndex, setRetakeIndex, setStep, shotsCount]);
+  }, [currentSlotTarget, executeSynchronizedCapture, retakeIndex, setRetakeIndex, setStep, shotsCount, safeTimeout]);
 
   const handleShutterClick = useCallback(() => {
     if (isCapturing) return;
@@ -419,7 +422,7 @@ export const CaptureScreen: React.FC = () => {
     setCountdown(count);
     playCountdownBeep(false);
 
-    const interval = setInterval(() => {
+    const interval = safeInterval(() => {
       count -= 1;
       if (count > 0) {
         setCountdown(count);
@@ -428,13 +431,13 @@ export const CaptureScreen: React.FC = () => {
         setCountdown(0);
         playCountdownBeep(true);
       } else {
-        clearInterval(interval);
+        clearTimer(interval);
         setCountdown(null);
         setIsCapturing(false);
         handleManualSnap();
       }
     }, 1000);
-  }, [isCapturing, countdownDuration, handleManualSnap]);
+  }, [isCapturing, countdownDuration, handleManualSnap, safeInterval, clearTimer]);
 
   /**
    * Hardware torch toggle — only surfaced via the low-light banner when
@@ -488,18 +491,18 @@ export const CaptureScreen: React.FC = () => {
         setIsCapturing(false);
         releaseWakeLock();
         setRetakeIndex(null);
-        setTimeout(() => setStep('review'), 600);
+        safeTimeout(() => setStep('review'), 600);
         return;
       }
 
       currentTarget += 1;
       if (currentTarget < shotsCount) {
         setCurrentSlotTarget(currentTarget);
-        setTimeout(() => runSingleShotCountdown(), 1200);
+        safeTimeout(() => runSingleShotCountdown(), 1200);
       } else {
         setIsCapturing(false);
         releaseWakeLock();
-        setTimeout(() => setStep('review'), 700);
+        safeTimeout(() => setStep('review'), 700);
       }
     };
 
@@ -514,7 +517,7 @@ export const CaptureScreen: React.FC = () => {
       setCountdown(count);
       playCountdownBeep(false);
 
-      const interval = setInterval(async () => {
+      const interval = safeInterval(async () => {
         count -= 1;
         if (count > 0) {
           setCountdown(count);
@@ -523,7 +526,7 @@ export const CaptureScreen: React.FC = () => {
           setCountdown(0);
           playCountdownBeep(true);
         } else {
-          clearInterval(interval);
+          clearTimer(interval);
           setCountdown(null);
           await captureAndAdvance();
         }
@@ -531,7 +534,7 @@ export const CaptureScreen: React.FC = () => {
     };
 
     runSingleShotCountdown();
-  }, [isCapturing, retakeIndex, shotsCount, countdownDuration, hasCameraAccess, executeSynchronizedCapture, checkLowLightNow, acquireWakeLock, releaseWakeLock, setRetakeIndex, setStep]);
+  }, [isCapturing, retakeIndex, shotsCount, countdownDuration, hasCameraAccess, executeSynchronizedCapture, checkLowLightNow, acquireWakeLock, releaseWakeLock, setRetakeIndex, setStep, safeTimeout, safeInterval, clearTimer]);
 
   // Close timer picker when clicking outside
   useEffect(() => {
@@ -593,7 +596,7 @@ export const CaptureScreen: React.FC = () => {
       const allWarnings = results.flatMap(r => r.warnings);
       if (allWarnings.length > 0) {
         setUploadWarnings(allWarnings);
-        setTimeout(() => setUploadWarnings([]), 6000);
+        safeTimeout(() => setUploadWarnings([]), 6000);
       }
 
       if (retakeIndex !== null) {
@@ -615,7 +618,7 @@ export const CaptureScreen: React.FC = () => {
           return [...filtered, newPhoto].sort((a, b) => a.slotIndex - b.slotIndex);
         });
         setRetakeIndex(null);
-        setTimeout(() => setStep('review'), 400);
+        safeTimeout(() => setStep('review'), 400);
         return;
       }
 
@@ -649,7 +652,7 @@ export const CaptureScreen: React.FC = () => {
 
       if (updatedPhotos.length >= shotsCount) {
         setUploadFeedback('All slots filled! Proceeding to review...');
-        setTimeout(() => setStep('review'), 500);
+        safeTimeout(() => setStep('review'), 500);
       } else {
         const nextUnfilled = Array.from({ length: shotsCount }).findIndex(
           (_, i) => !updatedPhotos.some(p => p.slotIndex === i)
@@ -657,12 +660,12 @@ export const CaptureScreen: React.FC = () => {
         const target = nextUnfilled >= 0 ? nextUnfilled : 0;
         setCurrentSlotTarget(target);
         setUploadFeedback(`Uploaded! Now select photo for shot #${target + 1}`);
-        setTimeout(() => setUploadFeedback(null), 3000);
+        safeTimeout(() => setUploadFeedback(null), 3000);
       }
     } catch (err) {
       console.error('File upload error:', err);
       setUploadFeedback('Failed to process image. Please try another file.');
-      setTimeout(() => setUploadFeedback(null), 4000);
+      safeTimeout(() => setUploadFeedback(null), 4000);
     }
 
     if (fileInputRef.current) {
@@ -700,6 +703,7 @@ export const CaptureScreen: React.FC = () => {
   };
 
   const handleBack = () => {
+    cancelAll();
     if (retakeIndex !== null) {
       setRetakeIndex(null);
       setStep('review');
@@ -711,6 +715,7 @@ export const CaptureScreen: React.FC = () => {
   };
 
   const handleConfirmBack = () => {
+    cancelAll();
     setShowBackConfirm(false);
     setPhotos([]);
     setStep('layout');

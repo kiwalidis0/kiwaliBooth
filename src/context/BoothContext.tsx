@@ -21,6 +21,7 @@ import { TEMPLATES, DEFAULT_CUSTOM_THEME } from '../data/templates';
 import { setSoundMuted } from '../utils/audio';
 import { saveSessionToDb, loadSessionFromDb, clearSessionFromDb } from '../utils/sessionStorageDb';
 import { getFormattedDate } from '../utils/date';
+import { sanitizeTheme } from '../utils/validators';
 import { BoothContext } from './boothContextValue';
 
 const THEME_PALETTES: Record<
@@ -77,6 +78,28 @@ const THEME_PALETTES: Record<
   },
 };
 
+const DEFAULT_PHOTO_ASSIGNMENTS: LayoutPhotoAssignments = {
+  single: [0],
+  double: [0, 1],
+  triple: [0, 1, 2],
+  classic4: [0, 1, 2, 3],
+};
+
+const createDefaultDateStamp = (): DateStampConfig => ({
+  enabled: true,
+  stampEnabled: false,
+  dateEnabled: true,
+  stampText: '',
+  dateText: getFormattedDate('YYYY.MM.DD'),
+  font: 'Fredoka',
+  color: '#111116',
+  format: 'YYYY.MM.DD',
+  customText: '',
+  fontSize: 20,
+  stampFontSize: 22,
+  dateFontSize: 13,
+});
+
 export const BoothProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [step, setStep] = useState<BoothStep>('landing');
   const [selectedLayoutIds, setSelectedLayoutIds] = useState<LayoutId[]>([]);
@@ -87,7 +110,7 @@ export const BoothProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   const [customTheme, setCustomThemeState] = useState<TemplateConfig>(() => {
     try {
       const saved = localStorage.getItem('kb_custom_theme');
-      if (saved) return JSON.parse(saved);
+      if (saved) return sanitizeTheme(JSON.parse(saved));
     } catch {
       // ignore storage errors
     }
@@ -98,12 +121,7 @@ export const BoothProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   const [finalImage, setFinalImage] = useState<string | null>(null);
   const [finalImages, setFinalImages] = useState<FinalImagesMap>({});
 
-  const [layoutPhotoAssignments, setLayoutPhotoAssignments] = useState<LayoutPhotoAssignments>({
-    single: [0],
-    double: [0, 1],
-    triple: [0, 1, 2],
-    classic4: [0, 1, 2, 3],
-  });
+  const [layoutPhotoAssignments, setLayoutPhotoAssignments] = useState<LayoutPhotoAssignments>(DEFAULT_PHOTO_ASSIGNMENTS);
 
   const selectedLayoutId = selectedLayoutIds[0] || activeStudioLayoutId || 'classic4';
   const setSelectedLayoutId = (id: LayoutId) => {
@@ -112,19 +130,14 @@ export const BoothProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   };
 
   const toggleLayoutId = (id: LayoutId) => {
-    setSelectedLayoutIds(prev => {
-      const exists = prev.includes(id);
-      let updated: LayoutId[];
-      if (exists) {
-        updated = prev.filter(item => item !== id);
-      } else {
-        updated = [...prev, id];
-      }
-      if (updated.length > 0 && !updated.includes(activeStudioLayoutId)) {
-        setActiveStudioLayoutId(updated[0]);
-      }
-      return updated;
-    });
+    const exists = selectedLayoutIds.includes(id);
+    const updated = exists
+      ? selectedLayoutIds.filter(item => item !== id)
+      : [...selectedLayoutIds, id];
+    setSelectedLayoutIds(updated);
+    if (updated.length > 0 && !updated.includes(activeStudioLayoutId)) {
+      setActiveStudioLayoutId(updated[0]);
+    }
   };
 
   const totalRequiredShots = useMemo(() => {
@@ -189,20 +202,7 @@ export const BoothProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     return false; // Default: Sound on
   });
 
-  const [dateStamp, setDateStamp] = useState<DateStampConfig>({
-    enabled: true,
-    stampEnabled: false,
-    dateEnabled: true,
-    stampText: '',
-    dateText: getFormattedDate('YYYY.MM.DD'),
-    font: 'Fredoka',
-    color: '#111116',
-    format: 'YYYY.MM.DD',
-    customText: '',
-    fontSize: 20,
-    stampFontSize: 22,
-    dateFontSize: 13,
-  });
+  const [dateStamp, setDateStamp] = useState<DateStampConfig>(createDefaultDateStamp);
 
   const [stickers, setStickers] = useState<StickerItem[]>([]);
   const [savedSession, setSavedSession] = useState<SavedBoothSession | null>(null);
@@ -233,13 +233,15 @@ export const BoothProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         selectedTemplateId,
         dateStamp,
         stickers,
+        layoutPhotoAssignments,
+        captureOrientation,
         timestamp: Date.now(),
       };
       saveSessionToDb(session).catch(() => {});
     }, 600);
 
     return () => clearTimeout(timeout);
-  }, [step, photos, selectedLayoutIds, activeStudioLayoutId, selectedTemplateId, dateStamp, stickers]);
+  }, [step, photos, selectedLayoutIds, activeStudioLayoutId, selectedTemplateId, dateStamp, stickers, layoutPhotoAssignments, captureOrientation]);
 
   // Keep audio module in sync & persist
   useEffect(() => {
@@ -305,15 +307,16 @@ export const BoothProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   }, [fontSize]);
 
   const setCustomTheme = useCallback((theme: TemplateConfig) => {
-    setCustomThemeState(theme);
+    const sanitized = sanitizeTheme(theme);
+    setCustomThemeState(sanitized);
     try {
-      localStorage.setItem('kb_custom_theme', JSON.stringify(theme));
+      localStorage.setItem('kb_custom_theme', JSON.stringify(sanitized));
     } catch {
       // ignore storage errors
     }
     setDateStamp(prev => ({
       ...prev,
-      color: theme.textColor,
+      color: sanitized.textColor,
     }));
   }, []);
 
@@ -355,8 +358,11 @@ export const BoothProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 
   const addSticker = (emoji: string, x?: number, y?: number, imageUrl?: string) => {
     const layout = LAYOUTS[selectedLayoutId];
+    const generatedId = typeof crypto !== 'undefined' && 'randomUUID' in crypto
+      ? `sticker-${crypto.randomUUID()}`
+      : `sticker-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`;
     const newSticker: StickerItem = {
-      id: `sticker-${Date.now()}-${Math.random().toString(36).substr(2, 4)}`,
+      id: generatedId,
       emoji,
       imageUrl,
       x: x !== undefined ? x : layout.width / 2 + (Math.random() * 80 - 40),
@@ -385,6 +391,12 @@ export const BoothProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     setSelectedTemplateIdState(savedSession.selectedTemplateId);
     setDateStamp(savedSession.dateStamp);
     setStickers(savedSession.stickers);
+    if (savedSession.layoutPhotoAssignments) {
+      setLayoutPhotoAssignments(savedSession.layoutPhotoAssignments);
+    }
+    if (savedSession.captureOrientation) {
+      setCaptureOrientation(savedSession.captureOrientation);
+    }
     setStep(savedSession.step || 'review');
     setSavedSession(null);
   }, [savedSession]);
@@ -433,17 +445,16 @@ export const BoothProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 
   const resetBooth = () => {
     setSelectedLayoutIds([]);
+    setActiveStudioLayoutId('classic4');
+    setCaptureOrientation('portrait');
+    setSelectedTemplateIdState('classic-white');
     setPhotos([]);
     setStickers([]);
     setRetakeIndex(null);
     setFinalImage(null);
     setFinalImages({});
-    setLayoutPhotoAssignments({
-      single: [0],
-      double: [0, 1],
-      triple: [0, 1, 2],
-      classic4: [0, 1, 2, 3],
-    });
+    setLayoutPhotoAssignments(DEFAULT_PHOTO_ASSIGNMENTS);
+    setDateStamp(createDefaultDateStamp());
     clearSessionFromDb().catch(() => {});
     setSavedSession(null);
     setStep('landing');

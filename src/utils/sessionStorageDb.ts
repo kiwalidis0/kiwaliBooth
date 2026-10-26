@@ -1,10 +1,11 @@
 import type { SavedBoothSession } from '../types/photobooth';
+import { isSavedBoothSession } from './validators';
 
 const DB_NAME = 'kiwalibooth_db';
 const DB_VERSION = 1;
 const STORE_NAME = 'active_session';
 const SESSION_KEY = 'latest_session';
-const SESSION_MAX_AGE_MS = 24 * 60 * 60 * 1000; // 24 hours
+export const SESSION_MAX_AGE_MS = 24 * 60 * 60 * 1000; // 24 hours
 
 function openDatabase(): Promise<IDBDatabase> {
   return new Promise((resolve, reject) => {
@@ -32,6 +33,11 @@ function openDatabase(): Promise<IDBDatabase> {
  * Safe against the 5MB localStorage limit.
  */
 export async function saveSessionToDb(session: SavedBoothSession): Promise<void> {
+  if (!isSavedBoothSession(session)) {
+    console.warn('Attempted to save invalid session data, skipping persistence.');
+    return;
+  }
+
   try {
     const db = await openDatabase();
     return new Promise((resolve, reject) => {
@@ -56,33 +62,20 @@ export async function saveSessionToDb(session: SavedBoothSession): Promise<void>
 }
 
 /**
- * Retrieve the saved session from IndexedDB if not expired.
+ * Retrieve the saved session from IndexedDB if valid and unexpired.
+ * Corrupted or expired sessions are automatically purged.
  */
 export async function loadSessionFromDb(): Promise<SavedBoothSession | null> {
   try {
     const db = await openDatabase();
-    return new Promise((resolve) => {
+    const session = await new Promise<unknown>((resolve) => {
       const tx = db.transaction(STORE_NAME, 'readonly');
       const store = tx.objectStore(STORE_NAME);
       const req = store.get(SESSION_KEY);
 
       req.onsuccess = () => {
-        const session = req.result as SavedBoothSession | undefined;
         db.close();
-
-        if (!session) {
-          resolve(null);
-          return;
-        }
-
-        // Expire if older than 24 hours
-        if (Date.now() - session.timestamp > SESSION_MAX_AGE_MS) {
-          clearSessionFromDb().catch(() => {});
-          resolve(null);
-          return;
-        }
-
-        resolve(session);
+        resolve(req.result);
       };
 
       req.onerror = () => {
@@ -90,20 +83,46 @@ export async function loadSessionFromDb(): Promise<SavedBoothSession | null> {
         resolve(null);
       };
     });
+
+    if (!session) {
+      return null;
+    }
+
+    // Validate schema
+    if (!isSavedBoothSession(session)) {
+      await clearSessionFromDb().catch(() => {});
+      return null;
+    }
+
+    // Expire if older than 24 hours
+    if (Date.now() - session.timestamp > SESSION_MAX_AGE_MS) {
+      await clearSessionFromDb().catch(() => {});
+      return null;
+    }
+
+    return session;
   } catch {
     // Fallback to sessionStorage
     try {
       if (typeof window !== 'undefined') {
         const raw = window.sessionStorage.getItem(SESSION_KEY);
         if (raw) {
-          const session = JSON.parse(raw) as SavedBoothSession;
-          if (Date.now() - session.timestamp <= SESSION_MAX_AGE_MS) {
-            return session;
+          const parsed = JSON.parse(raw);
+          if (!isSavedBoothSession(parsed) || Date.now() - parsed.timestamp > SESSION_MAX_AGE_MS) {
+            window.sessionStorage.removeItem(SESSION_KEY);
+            return null;
           }
+          return parsed;
         }
       }
     } catch {
-      // Ignore
+      try {
+        if (typeof window !== 'undefined') {
+          window.sessionStorage.removeItem(SESSION_KEY);
+        }
+      } catch {
+        // Ignore
+      }
     }
     return null;
   }

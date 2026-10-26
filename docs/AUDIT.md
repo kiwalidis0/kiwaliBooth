@@ -259,7 +259,14 @@ Maintainer decisions: presence feature becomes opt-in with prominent disclosure;
 | S-1 | Resolved | Live user count is off by default and opt-in via a disclosure panel. The networking library is lazy-loaded only after opt-in. Turning it off disconnects immediately. |
 | L-1 | Resolved | References in index.html and vite.config.ts now use kiwalibooth.svg to match the file. |
 | L-2 | Resolved | Unused custom overlay state, props, and types removed. |
-| Q-4 | Partly resolved | MIT LICENSE added. Tests, CI, and .env ignore rules remain open. |
+| S-2 | Resolved | Hex color validation and XML escaping in templateGenerator.ts; sanitizeTheme falls back to defaults on corrupt storage. |
+| S-5 | Resolved | Runtime schema guard isSavedBoothSession validates stored data; corrupt sessions are safely purged. |
+| L-6 | Resolved | Expired sessions (>24 hours) automatically purged from IndexedDB and sessionStorage. |
+| Q-1 | Resolved | Added ErrorBoundary component wrapping application tree with reload and data-reset recovery options. |
+| L-3 | Resolved | useSafeTimers hook created and integrated into CaptureScreen; timeouts and intervals safely tracked and auto-cleared on unmount/navigation. |
+| L-4 | Resolved | resetBooth resets all session-scoped state; layoutPhotoAssignments and captureOrientation persisted and restored. |
+| L-5 | Resolved | createAnimatedGif returns objectUrl; DownloadScreen explicitly revokes previous and unmounted blob URLs. |
+| Q-4 | Partly resolved | MIT LICENSE added; Vitest test suite added with 21 unit tests covering validation, storage, escaping, and timer hooks. CI and .env rules remain open. |
 | Privacy copy | Resolved | PrivacyModal and landing text rewritten for non-technical readers and aligned with actual behavior. |
 
-Open items: S-2 to S-9 (except S-1), L-3 to L-6, P-1, Q-1 to Q-3, Q-5.
+Open items: S-3, S-4, S-6 to S-9, P-1, Q-2, Q-3, Q-4 (CI/.env), Q-5.

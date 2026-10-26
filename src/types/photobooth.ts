@@ -63,6 +63,8 @@ export interface SavedBoothSession {
   selectedTemplateId: string;
   dateStamp: DateStampConfig;
   stickers: StickerItem[];
+  layoutPhotoAssignments?: LayoutPhotoAssignments;
+  captureOrientation?: CaptureOrientation;
   timestamp: number;
 }
 

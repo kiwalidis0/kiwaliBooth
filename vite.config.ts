@@ -8,7 +8,7 @@ export default defineConfig({
     VitePWA({
       registerType: 'autoUpdate',
       includeAssets: [
-        'kiwaliBooth.svg',
+        'kiwalibooth.svg',
         'favicon-32.png',
         'apple-touch-icon.png',
         'icon-192.png',

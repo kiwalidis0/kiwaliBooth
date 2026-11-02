@@ -86,7 +86,7 @@ export const PrivacyModal: React.FC<PrivacyModalProps> = ({ isOpen, onClose }) =
                   leading-tight
                 "
               >
-                Privacy Policy &amp; Architecture
+                Privacy Policy
               </h3>
 
               <p
@@ -98,7 +98,7 @@ export const PrivacyModal: React.FC<PrivacyModalProps> = ({ isOpen, onClose }) =
                   leading-relaxed
                 "
               >
-                How Kiwalibooth protects your photos &amp; webcam
+                In plain words: what happens to your photos and your data
               </p>
             </div>
           </div>
@@ -173,11 +173,11 @@ export const PrivacyModal: React.FC<PrivacyModalProps> = ({ isOpen, onClose }) =
                   leading-snug
                 "
               >
-                100% Client-Side Processing
+                Your photos stay on your device
               </h4>
 
               <p>
-                Every photo capture, webcam stream, canvas filter, sticker, and strip export runs client-side in your browser via WebRTC and the HTML5 Canvas API. No backend server processes your images.
+                Taking photos, adding filters and stickers, and saving your strip all happen inside your own browser. Kiwalibooth has no server that receives your pictures, so we never see them. Your camera is only used while you are taking photos, and the video is never recorded or sent anywhere.
               </p>
             </div>
           </div>
@@ -209,11 +209,11 @@ export const PrivacyModal: React.FC<PrivacyModalProps> = ({ isOpen, onClose }) =
                   leading-snug
                 "
               >
-                Zero Cloud Uploads &amp; Zero Photo Telemetry
+                No accounts, no tracking
               </h4>
 
               <p>
-                Kiwalibooth has no backend server, cloud database, or analytics trackers. Your photo bytes are never uploaded. The only network requests are Google Fonts, decentralized peer presence signaling when online, and any optional custom overlay URL you provide yourself.
+                You do not need to sign up, and we do not use advertising or analytics trackers. Your photos are never uploaded. The only things the app loads from the internet are its text fonts (from Google Fonts, which means Google can see that your device requested them), and the optional live user count described below, which is off unless you turn it on.
               </p>
             </div>
           </div>
@@ -245,11 +245,11 @@ export const PrivacyModal: React.FC<PrivacyModalProps> = ({ isOpen, onClose }) =
                   leading-snug
                 "
               >
-                Database-Free Live User Count
+                Live user count (optional, off by default)
               </h4>
 
               <p>
-                When your device is connected to the internet, Kiwalibooth counts concurrent visitors in real-time using a decentralized, ephemeral peer-to-peer (WebRTC) mesh. No user accounts, database records, IP addresses, browsing histories, or photos are ever logged or retained. When you disconnect or close the tab, your presence vanishes instantly. If you are offline, Kiwalibooth runs entirely local with zero network calls.
+                The home page can show how many people are using Kiwalibooth right now. This only works if you choose to turn it on, and it is off until you do. If you turn it on, your device connects to public servers and to other visitors who also turned it on. Because that is how the internet works, those servers and other visitors may be able to see your internet address (IP address), like any website you visit. Your photos, name and other details are never shared, and we do not keep any record of who connected. You can turn it off at any time from the home page, and it disconnects right away. The app works the same whether it is on or off.
               </p>
             </div>
           </div>
@@ -281,11 +281,11 @@ export const PrivacyModal: React.FC<PrivacyModalProps> = ({ isOpen, onClose }) =
                   leading-snug
                 "
               >
-                Local Session Recovery &amp; Easy Clearance
+                Saved on your device, and easy to delete
               </h4>
 
               <p>
-                Your active session auto-saves to this device's IndexedDB for 24 hours so you can resume after a refresh. Clicking "Shoot Another" or "Discard" deletes it immediately. Theme, camera, and app preferences stay in localStorage. No cookies are used.
+                So you do not lose your work if the page refreshes, your photos and edits are saved in your browser's storage on this device for up to 24 hours. Choosing "Shoot Another" or "Discard" deletes them immediately, and you can also clear this site's data in your browser settings. Your settings (such as theme and dark mode) are remembered the same way. We do not use cookies. If you share this device with someone else, choose "Discard" when you are done.
               </p>
             </div>
           </div>
@@ -304,9 +304,9 @@ export const PrivacyModal: React.FC<PrivacyModalProps> = ({ isOpen, onClose }) =
             "
           >
             <strong className="font-semibold text-black dark:text-stone-200">
-              Technical Note:
+              Want to check for yourself?
             </strong>{' '}
-            Built on open-source web primitives (WebRTC, HTML5 Canvas, Konva, and decentralized peer-to-peer ephemeral presence). Check DevTools Application tab for the local `kiwalibooth_db` session store and Network tab to confirm zero photo telemetry.
+            Kiwalibooth is open source under the MIT license, so anyone can read exactly what the code does. If you are technical, your browser's developer tools show what is stored on your device and confirm that no photos are sent over the network.
           </div>
         </main>
 

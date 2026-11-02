@@ -11,6 +11,7 @@ import { EditorScreen } from './components/EditorScreen';
 import { DownloadScreen } from './components/DownloadScreen';
 import { PrivacyModal } from './components/PrivacyModal';
 import { SessionRestoreBanner } from './components/SessionRestoreBanner';
+import { ErrorBoundary } from './components/ErrorBoundary';
 
 interface MainContentProps {
   onOpenPrivacy: () => void;
@@ -60,9 +61,11 @@ const AppLayout: React.FC = () => {
 
 export const App: React.FC = () => {
   return (
-    <BoothProvider>
-      <AppLayout />
-    </BoothProvider>
+    <ErrorBoundary>
+      <BoothProvider>
+        <AppLayout />
+      </BoothProvider>
+    </ErrorBoundary>
   );
 };
 

@@ -1,4 +1,5 @@
 import type { LayoutConfig, TemplateConfig } from '../types/photobooth';
+import { isValidHexColor } from './validators';
 
 /**
  * Creates a clean SVG overlay data URL for built-in template decorations.
@@ -21,7 +22,12 @@ export function generateTemplateOverlaySvg(layout: LayoutConfig, template: Templ
   } else if (template.theme === 'retro90') {
     brandColor = '#C45E3D';
   } else if (template.theme === 'custom') {
-    brandColor = template.accentColor || template.textColor || '#1C1917';
+    const customAccent = template.accentColor || template.textColor;
+    brandColor = isValidHexColor(customAccent) ? customAccent : '#1C1917';
+  }
+
+  if (!isValidHexColor(brandColor)) {
+    brandColor = '#1C1917';
   }
 
   // Generate theme-specific physical and decorative accents
@@ -50,10 +56,10 @@ export function generateTemplateOverlaySvg(layout: LayoutConfig, template: Templ
     themeExtras = `
       <g id="sprockets">
         ${sprocketsSvg}
-        <text x="32" y="16" font-family="monospace" font-size="10" fill="#F59E0B" font-weight="bold" opacity="0.8">▶ 24A</text>
-        <text x="${width - 90}" y="16" font-family="monospace" font-size="10" fill="#F59E0B" font-weight="bold" opacity="0.8">K-400 • ISO400</text>
+        <text x="32" y="16" font-family="monospace" font-size="10" fill="#F59E0B" font-weight="bold" opacity="0.8">&gt; 24A</text>
+        <text x="${width - 90}" y="16" font-family="monospace" font-size="10" fill="#F59E0B" font-weight="bold" opacity="0.8">K-400 - ISO400</text>
         <text x="32" y="${height - 8}" font-family="monospace" font-size="10" fill="#F59E0B" font-weight="bold" opacity="0.8">SAFETY FILM</text>
-        <text x="${width - 70}" y="${height - 8}" font-family="monospace" font-size="10" fill="#F59E0B" font-weight="bold" opacity="0.8">25 ▶▶</text>
+        <text x="${width - 70}" y="${height - 8}" font-family="monospace" font-size="10" fill="#F59E0B" font-weight="bold" opacity="0.8">25 &gt;&gt;</text>
       </g>
     `;
   } else if (template.theme === 'doodles') {

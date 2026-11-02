@@ -49,6 +49,7 @@ export const DownloadScreen: React.FC = () => {
   const [showGifModal, setShowGifModal] = useState<boolean>(false);
   const [isGeneratingGif, setIsGeneratingGif] = useState<boolean>(false);
   const [gifDataUrl, setGifDataUrl] = useState<string | null>(null);
+  const gifObjectUrlRef = useRef<string | null>(null);
   const [boomerang, setBoomerang] = useState<boolean>(false);
   const [downloadSuccessToast, setDownloadSuccessToast] = useState<string | null>(null);
   const toastTimeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -178,13 +179,27 @@ export const DownloadScreen: React.FC = () => {
     }
   };
 
+  // Revoke any allocated GIF object URLs on unmount
+  useEffect(() => {
+    return () => {
+      if (gifObjectUrlRef.current) {
+        URL.revokeObjectURL(gifObjectUrlRef.current);
+        gifObjectUrlRef.current = null;
+      }
+    };
+  }, []);
+
   const generateGif = useCallback(async (useBoomerang: boolean) => {
     if (photos.length === 0) return;
     setIsGeneratingGif(true);
     try {
       const frames = photos.map(p => p.dataUrl);
-      const { dataUrl } = await createAnimatedGif(frames, { boomerang: useBoomerang, delay: 350 });
-      setGifDataUrl(dataUrl);
+      const { objectUrl } = await createAnimatedGif(frames, { boomerang: useBoomerang, delay: 350 });
+      if (gifObjectUrlRef.current) {
+        URL.revokeObjectURL(gifObjectUrlRef.current);
+      }
+      gifObjectUrlRef.current = objectUrl;
+      setGifDataUrl(objectUrl);
     } catch (err) {
       console.error('GIF generation failed:', err);
     } finally {
@@ -217,6 +232,10 @@ export const DownloadScreen: React.FC = () => {
   };
 
   const handleConfirmShootAnother = () => {
+    if (gifObjectUrlRef.current) {
+      URL.revokeObjectURL(gifObjectUrlRef.current);
+      gifObjectUrlRef.current = null;
+    }
     setShowShootAnotherConfirm(false);
     resetBooth();
     setStep('layout');

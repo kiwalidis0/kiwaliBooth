@@ -37,8 +37,6 @@ export interface BoothContextType {
   setCaptureOrientation: (orientation: CaptureOrientation) => void;
   selectedTemplateId: string;
   setSelectedTemplateId: (id: string) => void;
-  customOverlayUrl: string | null;
-  setCustomOverlayUrl: (url: string | null) => void;
   photos: CapturedPhoto[];
   setPhotos: React.Dispatch<React.SetStateAction<CapturedPhoto[]>>;
   updatePhoto: (slotIndex: number, updates: Partial<CapturedPhoto>) => void;
